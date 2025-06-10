@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -230,4 +229,39 @@ button,
     outline: 3px solid;
     outline-offset: 2px;
   }
+}
+
+/* Simple mode enhancements */
+.simple-mode {
+  --font-family: system-ui, -apple-system, sans-serif;
+}
+
+.simple-mode h1,
+.simple-mode h2,
+.simple-mode h3,
+.simple-mode h4,
+.simple-mode h5,
+.simple-mode h6 {
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.simple-mode p,
+.simple-mode span,
+.simple-mode div {
+  line-height: 1.5;
+}
+
+.simple-mode button {
+  font-weight: 500;
+  padding: 12px 20px;
+}
+
+/* Ensure good contrast in simple mode */
+.simple-mode button:focus,
+.simple-mode [role="button"]:focus,
+.simple-mode input:focus,
+.simple-mode select:focus {
+  outline: 3px solid hsl(var(--ring)) !important;
+  outline-offset: 2px !important;
 }
