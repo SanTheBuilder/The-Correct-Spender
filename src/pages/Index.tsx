@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,12 +8,14 @@ import BudgetingTools from "@/components/BudgetingTools";
 import AIChat from "@/components/AIChat";
 import AccessibilitySettings from "@/components/AccessibilitySettings";
 import LanguageSelector from "@/components/LanguageSelector";
+import Tutorial from "@/components/Tutorial";
 import { AccessibilityProvider, useAccessibility } from "@/components/AccessibilityProvider";
 import { getRandomFact } from "@/utils/financialData";
 
 const AppContent = () => {
   const [activeSection, setActiveSection] = useState<string>("overview");
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const [currentFact, setCurrentFact] = useState<string>("");
   const { language, setLanguage, simpleMode, t } = useAccessibility();
 
@@ -22,26 +25,50 @@ const AppContent = () => {
   }, []);
 
   useEffect(() => {
-    // Check if user has previously selected a language
-    const savedPrefs = localStorage.getItem("accessibility-preferences");
+    // Check if user has completed setup before
+    const savedPrefs = localStorage.getItem("user-preferences");
     if (!savedPrefs) {
       setShowLanguageSelector(true);
+    } else {
+      // Check if user has seen tutorial
+      const prefs = JSON.parse(savedPrefs);
+      if (!prefs.hasSeenTutorial) {
+        setShowTutorial(true);
+      }
     }
   }, []);
 
   const handleLanguageSelect = (selectedLanguage: string) => {
     setLanguage(selectedLanguage);
-    // Save user preferences when language is selected for the first time
     const prefs = {
       language: selectedLanguage,
       hasCompletedSetup: true,
-      setupDate: new Date().toISOString()
+      setupDate: new Date().toISOString(),
+      hasSeenTutorial: false
     };
     localStorage.setItem("user-preferences", JSON.stringify(prefs));
+    setShowLanguageSelector(false);
+    setShowTutorial(true);
   };
 
   const handleContinue = () => {
     setShowLanguageSelector(false);
+    setShowTutorial(true);
+  };
+
+  const handleTutorialComplete = () => {
+    setShowTutorial(false);
+    // Update preferences to mark tutorial as seen
+    const savedPrefs = localStorage.getItem("user-preferences");
+    if (savedPrefs) {
+      const prefs = JSON.parse(savedPrefs);
+      prefs.hasSeenTutorial = true;
+      localStorage.setItem("user-preferences", JSON.stringify(prefs));
+    }
+  };
+
+  const handleStartAssessment = () => {
+    setActiveSection("assessment");
   };
 
   const features = [
@@ -88,6 +115,15 @@ const AppContent = () => {
       <LanguageSelector 
         onLanguageSelect={handleLanguageSelect}
         onContinue={handleContinue}
+      />
+    );
+  }
+
+  if (showTutorial) {
+    return (
+      <Tutorial 
+        onComplete={handleTutorialComplete}
+        onStartAssessment={handleStartAssessment}
       />
     );
   }

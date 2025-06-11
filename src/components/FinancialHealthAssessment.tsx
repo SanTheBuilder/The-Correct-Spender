@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { ThumbsUp, ThumbsDown, MessageCircle } from "lucide-react";
 
 interface FinancialData {
   monthlyIncome: number;
@@ -13,6 +14,14 @@ interface FinancialData {
   savings: number;
   debt: number;
   emergencyFund: number;
+}
+
+interface Assessment {
+  score: number;
+  recommendations: string[];
+  savingsRate: number;
+  emergencyMonths: number;
+  debtToIncome: number;
 }
 
 const FinancialHealthAssessment = () => {
@@ -24,7 +33,8 @@ const FinancialHealthAssessment = () => {
     emergencyFund: 0
   });
   
-  const [assessment, setAssessment] = useState<any>(null);
+  const [assessment, setAssessment] = useState<Assessment | null>(null);
+  const [showAdditionalAdvice, setShowAdditionalAdvice] = useState(false);
   const { toast } = useToast();
 
   const calculateHealthScore = (data: FinancialData) => {
@@ -62,25 +72,72 @@ const FinancialHealthAssessment = () => {
     const recommendations = [];
     
     const savingsRate = ((data.monthlyIncome - data.monthlyExpenses) / data.monthlyIncome) * 100;
-    if (savingsRate < 10) {
-      recommendations.push("Try to reduce expenses and aim to save at least 10% of your income");
-    }
-
     const emergencyMonths = data.emergencyFund / data.monthlyExpenses;
-    if (emergencyMonths < 3) {
-      recommendations.push("Build an emergency fund covering 3-6 months of expenses");
+    const debtToIncome = (data.debt / (data.monthlyIncome * 12)) * 100;
+
+    // Savings rate recommendations
+    if (savingsRate < 5) {
+      recommendations.push("Start with saving just $1 per day - even small amounts build habits");
+      recommendations.push("Review your subscriptions and cancel unused services");
+    } else if (savingsRate < 10) {
+      recommendations.push("Great start! Try to gradually increase your savings rate to 10-15%");
+      recommendations.push("Consider automating your savings to make it effortless");
+    } else if (savingsRate < 20) {
+      recommendations.push("You're doing well! Consider increasing savings when you get raises or bonuses");
     }
 
-    const debtToIncome = (data.debt / (data.monthlyIncome * 12)) * 100;
-    if (debtToIncome > 40) {
-      recommendations.push("Focus on paying down debt to improve your debt-to-income ratio");
+    // Emergency fund recommendations
+    if (emergencyMonths < 1) {
+      recommendations.push("Start with a mini emergency fund of $500-$1000");
+      recommendations.push("Keep emergency funds in a separate, easily accessible savings account");
+    } else if (emergencyMonths < 3) {
+      recommendations.push("Work toward 3 months of expenses in your emergency fund");
+      recommendations.push("Consider a high-yield savings account for your emergency fund");
+    } else if (emergencyMonths < 6) {
+      recommendations.push("Excellent progress! Aim for 6 months of expenses for full security");
+    }
+
+    // Debt recommendations
+    if (debtToIncome > 60) {
+      recommendations.push("Consider debt consolidation or speaking with a credit counselor");
+      recommendations.push("Focus on paying minimums on all debts, then extra on the highest interest rate debt");
+    } else if (debtToIncome > 40) {
+      recommendations.push("Try the debt avalanche method: pay minimums on all debts, extra on highest interest");
+      recommendations.push("Consider increasing your income through side work or skills development");
+    } else if (debtToIncome > 20) {
+      recommendations.push("You're managing debt well - consider paying a bit extra on principal when possible");
+    }
+
+    // Additional general recommendations based on score
+    if (score < 40) {
+      recommendations.push("Focus on one financial goal at a time to avoid overwhelm");
+      recommendations.push("Track your spending for a week to identify patterns");
+    } else if (score < 60) {
+      recommendations.push("Consider learning about investing basics for long-term wealth building");
+      recommendations.push("Review and optimize your insurance coverage");
+    } else if (score >= 80) {
+      recommendations.push("Excellent financial health! Consider advanced strategies like tax optimization");
+      recommendations.push("You might be ready to explore additional investment opportunities");
     }
 
     if (recommendations.length === 0) {
-      recommendations.push("Great job! Keep maintaining your healthy financial habits");
+      recommendations.push("Outstanding financial management! Keep up the excellent work");
     }
 
     return recommendations;
+  };
+
+  const getAdditionalAdvice = (data: FinancialData) => {
+    return [
+      "Create a written budget and review it monthly",
+      "Set up automatic transfers to savings accounts",
+      "Negotiate bills like insurance, phone, and internet annually",
+      "Use the 24-hour rule before making non-essential purchases over $100",
+      "Consider meal planning to reduce food waste and costs",
+      "Look into free financial education resources from your bank or credit union",
+      "Track your net worth quarterly to monitor progress",
+      "Consider increasing retirement contributions with each raise"
+    ];
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -106,9 +163,34 @@ const FinancialHealthAssessment = () => {
       debtToIncome: (formData.debt / (formData.monthlyIncome * 12)) * 100
     });
 
+    setShowAdditionalAdvice(false);
+
     toast({
       title: "Assessment Complete!",
       description: `Your financial health score is ${score}/100`
+    });
+  };
+
+  const handleFeedback = (helpful: boolean) => {
+    if (helpful) {
+      toast({
+        title: "Thank you!",
+        description: "We're glad the advice was helpful"
+      });
+    } else {
+      setShowAdditionalAdvice(true);
+      toast({
+        title: "More advice coming up!",
+        description: "Here are additional tips that might help"
+      });
+    }
+  };
+
+  const handleGoToAI = () => {
+    // This would navigate to AI chat - for now we'll show a message
+    toast({
+      title: "AI Helper",
+      description: "Navigate to the AI Chat section for personalized assistance"
     });
   };
 
@@ -224,7 +306,7 @@ const FinancialHealthAssessment = () => {
             </div>
 
             <div>
-              <h3 className="font-semibold mb-3">Recommendations:</h3>
+              <h3 className="font-semibold mb-3">Personalized Recommendations:</h3>
               <ul className="space-y-2">
                 {assessment.recommendations.map((rec: string, index: number) => (
                   <li key={index} className="flex items-start gap-2">
@@ -233,6 +315,53 @@ const FinancialHealthAssessment = () => {
                   </li>
                 ))}
               </ul>
+            </div>
+
+            {showAdditionalAdvice && (
+              <div>
+                <h3 className="font-semibold mb-3">Additional Tips:</h3>
+                <ul className="space-y-2">
+                  {getAdditionalAdvice(formData).map((tip: string, index: number) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span className="text-primary">•</span>
+                      <span className="text-muted-foreground">{tip}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="border-t pt-4">
+              <p className="text-sm text-muted-foreground mb-3">Was this advice helpful?</p>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleFeedback(true)}
+                  className="flex items-center gap-2"
+                >
+                  <ThumbsUp className="h-4 w-4" />
+                  Helpful
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleFeedback(false)}
+                  className="flex items-center gap-2"
+                >
+                  <ThumbsDown className="h-4 w-4" />
+                  Not Helpful
+                </Button>
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  onClick={handleGoToAI}
+                  className="flex items-center gap-2 ml-auto"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Get AI Help
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

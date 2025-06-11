@@ -69,7 +69,16 @@ const AccessibilitySettings = () => {
   const languages = [
     { value: "en", label: "English", flag: "🇺🇸" },
     { value: "es", label: "Español", flag: "🇪🇸" },
-    { value: "fr", label: "Français", flag: "🇫🇷" }
+    { value: "fr", label: "Français", flag: "🇫🇷" },
+    { value: "de", label: "Deutsch", flag: "🇩🇪" },
+    { value: "it", label: "Italiano", flag: "🇮🇹" },
+    { value: "pt", label: "Português", flag: "🇵🇹" },
+    { value: "ru", label: "Русский", flag: "🇷🇺" },
+    { value: "ja", label: "日本語", flag: "🇯🇵" },
+    { value: "ko", label: "한국어", flag: "🇰🇷" },
+    { value: "zh", label: "中文", flag: "🇨🇳" },
+    { value: "ar", label: "العربية", flag: "🇸🇦" },
+    { value: "hi", label: "हिंदी", flag: "🇮🇳" }
   ];
 
   return (
@@ -198,19 +207,21 @@ const AccessibilitySettings = () => {
               <Globe className="h-5 w-5" aria-hidden="true" />
               <Label className="text-base font-medium">{t("language")}</Label>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2" role="radiogroup" aria-label={simpleMode ? "Language options" : "Language selection"}>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-60 overflow-y-auto" role="radiogroup" aria-label={simpleMode ? "Language options" : "Language selection"}>
               {languages.map((lang) => (
                 <Button
                   key={lang.value}
                   variant={language === lang.value ? "default" : "outline"}
                   onClick={() => setLanguage(lang.value)}
-                  className="text-sm justify-start"
+                  className="text-sm justify-start h-auto p-3"
                   role="radio"
                   aria-checked={language === lang.value}
                   aria-label={`${simpleMode ? "Change language to" : "Set language to"} ${lang.label}`}
                 >
-                  <span className="mr-2" aria-hidden="true">{lang.flag}</span>
-                  {lang.label}
+                  <div className="flex items-center gap-2">
+                    <span aria-hidden="true">{lang.flag}</span>
+                    <span className="text-xs">{lang.label}</span>
+                  </div>
                 </Button>
               ))}
             </div>
