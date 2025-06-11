@@ -1,11 +1,11 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { getBudgetRule } from "@/utils/financialData";
 
 interface BudgetCategory {
   id: string;
@@ -27,6 +27,22 @@ const BudgetingTools = () => {
   
   const { toast } = useToast();
 
+  // Load saved budget data on component mount
+  useEffect(() => {
+    const savedBudget = localStorage.getItem("budget-data");
+    if (savedBudget) {
+      const budgetData = JSON.parse(savedBudget);
+      setIncome(budgetData.income || 0);
+      setCategories(budgetData.categories || categories);
+    }
+  }, []);
+
+  // Save budget data whenever income or categories change
+  useEffect(() => {
+    const budgetData = { income, categories };
+    localStorage.setItem("budget-data", JSON.stringify(budgetData));
+  }, [income, categories]);
+
   const updateCategoryBudget = (id: string, budgeted: number) => {
     setCategories(prev => prev.map(cat => 
       cat.id === id ? { ...cat, budgeted } : cat
@@ -43,30 +59,33 @@ const BudgetingTools = () => {
   const totalSpent = categories.reduce((sum, cat) => sum + cat.spent, 0);
   const remainingIncome = income - totalBudgeted;
 
-  const apply50302010Rule = () => {
+  const applySuggestedRule = () => {
     if (income <= 0) {
       toast({
         title: "Set Your Income First",
-        description: "Please enter your monthly income to apply the 50-30-20-10 rule",
+        description: "Please enter your monthly income to apply a suggested budget rule",
         variant: "destructive"
       });
       return;
     }
 
+    const rule = getBudgetRule(income);
     const newCategories = [...categories];
-    newCategories[0].budgeted = income * 0.50; // Housing (50%)
-    newCategories[1].budgeted = income * 0.15; // Food (15%)
-    newCategories[2].budgeted = income * 0.15; // Transportation (15%)
-    newCategories[3].budgeted = income * 0.10; // Entertainment (10%)
-    newCategories[4].budgeted = income * 0.10; // Savings (10%)
+    newCategories[0].budgeted = income * rule.housing; // Housing
+    newCategories[1].budgeted = income * rule.food; // Food
+    newCategories[2].budgeted = income * rule.transportation; // Transportation
+    newCategories[3].budgeted = income * rule.entertainment; // Entertainment
+    newCategories[4].budgeted = income * rule.savings; // Savings
 
     setCategories(newCategories);
     
     toast({
-      title: "Budget Applied!",
-      description: "Applied the 50-30-20-10 budgeting rule to your categories"
+      title: `${rule.name} Applied!`,
+      description: rule.description
     });
   };
+
+  const currentRule = getBudgetRule(income);
 
   return (
     <div className="space-y-6">
@@ -90,11 +109,25 @@ const BudgetingTools = () => {
               />
             </div>
             <div className="flex items-end">
-              <Button onClick={apply50302010Rule} className="w-full">
-                Apply 50-30-20-10 Rule
+              <Button onClick={applySuggestedRule} className="w-full">
+                Apply {currentRule.name}
               </Button>
             </div>
           </div>
+
+          {income > 0 && (
+            <div className="p-4 bg-muted rounded-lg">
+              <h3 className="font-medium mb-2">Suggested Rule: {currentRule.name}</h3>
+              <p className="text-sm text-muted-foreground mb-3">{currentRule.description}</p>
+              <div className="text-xs text-muted-foreground">
+                Housing: {(currentRule.housing * 100).toFixed(0)}% • 
+                Food: {(currentRule.food * 100).toFixed(0)}% • 
+                Transport: {(currentRule.transportation * 100).toFixed(0)}% • 
+                Entertainment: {(currentRule.entertainment * 100).toFixed(0)}% • 
+                Savings: {(currentRule.savings * 100).toFixed(0)}%
+              </div>
+            </div>
+          )}
 
           <div className="p-4 bg-muted rounded-lg">
             <div className="grid grid-cols-3 gap-4 text-center">
@@ -117,6 +150,7 @@ const BudgetingTools = () => {
         </CardContent>
       </Card>
 
+      
       <Card>
         <CardHeader>
           <CardTitle>Budget Categories</CardTitle>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,11 +8,18 @@ import AIChat from "@/components/AIChat";
 import AccessibilitySettings from "@/components/AccessibilitySettings";
 import LanguageSelector from "@/components/LanguageSelector";
 import { AccessibilityProvider, useAccessibility } from "@/components/AccessibilityProvider";
+import { getRandomFact } from "@/utils/financialData";
 
 const AppContent = () => {
   const [activeSection, setActiveSection] = useState<string>("overview");
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
+  const [currentFact, setCurrentFact] = useState<string>("");
   const { language, setLanguage, simpleMode, t } = useAccessibility();
+
+  // Initialize random fact on mount and page refresh
+  useEffect(() => {
+    setCurrentFact(getRandomFact());
+  }, []);
 
   useEffect(() => {
     // Check if user has previously selected a language
@@ -25,6 +31,13 @@ const AppContent = () => {
 
   const handleLanguageSelect = (selectedLanguage: string) => {
     setLanguage(selectedLanguage);
+    // Save user preferences when language is selected for the first time
+    const prefs = {
+      language: selectedLanguage,
+      hasCompletedSetup: true,
+      setupDate: new Date().toISOString()
+    };
+    localStorage.setItem("user-preferences", JSON.stringify(prefs));
   };
 
   const handleContinue = () => {
@@ -150,35 +163,24 @@ const AppContent = () => {
                 </div>
               </section>
 
-              {/* Quick Stats or Tips */}
-              <section aria-labelledby="stats-heading">
+              {/* Dynamic Financial Fact */}
+              <section aria-labelledby="facts-heading">
                 <Card className="bg-primary/5 border-primary/20">
                   <CardHeader>
-                    <CardTitle id="stats-heading" className="text-center">
+                    <CardTitle id="facts-heading" className="text-center">
                       {simpleMode ? "Did You Know?" : "Did You Know?"}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="text-center space-y-2">
-                    <ul className="space-y-2" aria-label={simpleMode ? "Money facts" : "Financial statistics"}>
-                      <li className="text-muted-foreground">
-                        {simpleMode 
-                          ? "• Many people can't afford a $1,000 emergency" 
-                          : "• 64% of Americans can't afford a $1,000 emergency expense"
-                        }
-                      </li>
-                      <li className="text-muted-foreground">
-                        {simpleMode 
-                          ? "• Most people spend more money than they make" 
-                          : "• The average American spends $18,000 more than they earn each year"
-                        }
-                      </li>
-                      <li className="text-muted-foreground">
-                        {simpleMode 
-                          ? "• Making a budget can help you save money" 
-                          : "• Simple budgeting can help save 10-20% of your income"
-                        }
-                      </li>
-                    </ul>
+                    <p className="text-lg font-medium text-foreground">{currentFact}</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setCurrentFact(getRandomFact())}
+                      className="mt-3"
+                    >
+                      {simpleMode ? "Show Another Fact" : "Show Another Fact"}
+                    </Button>
                   </CardContent>
                 </Card>
               </section>
