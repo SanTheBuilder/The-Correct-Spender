@@ -27,42 +27,32 @@ const AccessibilitySettings = () => {
   const handleFontSizeChange = (size: string) => {
     setFontSize(size);
     toast({
-      title: simpleMode ? "Text size changed" : "Font Size Updated",
-      description: simpleMode ? `Text is now ${size}` : `Font size changed to ${size}`
+      title: t("textSizeChanged"),
+      description: `${t("textIsNow")} ${t(size)}`
     });
   };
 
   const handleHighContrastToggle = () => {
     setHighContrast(!highContrast);
     toast({
-      title: simpleMode 
-        ? (highContrast ? "Colors back to normal" : "High contrast on") 
-        : (highContrast ? "High Contrast Disabled" : "High Contrast Enabled"),
-      description: simpleMode 
-        ? "Colors have been adjusted" 
-        : "Visual contrast has been adjusted"
+      title: !highContrast ? t("highContrastEnabled") : t("highContrastDisabled"),
+      description: t("colorsAdjusted")
     });
   };
 
   const handleScreenReaderToggle = () => {
     setScreenReaderMode(!screenReaderMode);
     toast({
-      title: simpleMode 
-        ? (screenReaderMode ? "Screen reader help off" : "Screen reader help on")
-        : (screenReaderMode ? "Screen Reader Mode Disabled" : "Screen Reader Mode Enabled"),
-      description: simpleMode 
-        ? "Interface adjusted for screen readers"
-        : "Interface optimized for screen readers"
+      title: !screenReaderMode ? t("screenReaderModeEnabled") : t("screenReaderModeDisabled"),
+      description: t("interfaceOptimizedForScreenReaders")
     });
   };
 
   const handleSimpleModeToggle = () => {
     setSimpleMode(!simpleMode);
     toast({
-      title: !simpleMode ? "Simple mode on" : "Detailed mode on",
-      description: !simpleMode 
-        ? "Using simple language and basic options" 
-        : "Showing advanced options and technical terms"
+      title: !simpleMode ? t("simpleModeOn") : t("detailedModeOn"),
+      description: !simpleMode ? t("usingSimpleLanguage") : t("showingAdvancedOptions")
     });
   };
 
@@ -90,10 +80,7 @@ const AccessibilitySettings = () => {
             <CardTitle>{t("accessibilitySettings")}</CardTitle>
           </div>
           <CardDescription>
-            {simpleMode 
-              ? "Make the app easier to use for you" 
-              : "Customize the app to meet your accessibility needs"
-            }
+            {t("customizeAccessibilityNeeds")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -107,13 +94,13 @@ const AccessibilitySettings = () => {
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="simple" id="simple-mode" />
                 <Label htmlFor="simple-mode" className="cursor-pointer font-medium">
-                  {t("simple")} - {simpleMode ? "Easy words and basic options" : t("simpleModeDescription")}
+                  {t("simple")} - {t("easyWordsBasicOptions")}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="detailed" id="detailed-mode" />
                 <Label htmlFor="detailed-mode" className="cursor-pointer font-medium">
-                  {t("detailed")} - {simpleMode ? "More options and technical words" : t("detailedModeDescription")}
+                  {t("detailed")} - {t("moreOptionsTechnicalWords")}
                 </Label>
               </div>
             </RadioGroup>
@@ -125,7 +112,7 @@ const AccessibilitySettings = () => {
               <Type className="h-5 w-5" aria-hidden="true" />
               <Label className="text-base font-medium">{t("textSize")}</Label>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2" role="radiogroup" aria-label={simpleMode ? "Text size options" : "Font size options"}>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2" role="radiogroup" aria-label={t("textSizeOptions")}>
               {[
                 { value: "small", label: t("small") },
                 { value: "medium", label: t("medium") },
@@ -139,7 +126,7 @@ const AccessibilitySettings = () => {
                   className="text-sm"
                   role="radio"
                   aria-checked={fontSize === option.value}
-                  aria-label={`${simpleMode ? "Make text" : "Set font size to"} ${option.label}`}
+                  aria-label={`${t("setFontSizeTo")} ${option.label}`}
                 >
                   {option.label}
                 </Button>
@@ -162,14 +149,11 @@ const AccessibilitySettings = () => {
                   aria-describedby="high-contrast-description"
                 />
                 <Label htmlFor="high-contrast" className="cursor-pointer">
-                  {simpleMode ? "Make colors stronger" : t("highContrastMode")}
+                  {t("makeColorsStronger")}
                 </Label>
               </div>
               <p id="high-contrast-description" className="text-sm text-muted-foreground ml-6">
-                {simpleMode 
-                  ? "Makes text easier to see with stronger colors" 
-                  : "Increases contrast between text and background for better visibility"
-                }
+                {t("makeTextEasierToSee")}
               </p>
             </div>
           </div>
@@ -189,14 +173,11 @@ const AccessibilitySettings = () => {
                   aria-describedby="screen-reader-description"
                 />
                 <Label htmlFor="screen-reader" className="cursor-pointer">
-                  {simpleMode ? "Help for screen readers" : t("enhancedScreenReaderMode")}
+                  {t("helpForScreenReaders")}
                 </Label>
               </div>
               <p id="screen-reader-description" className="text-sm text-muted-foreground ml-6">
-                {simpleMode 
-                  ? "Makes the app work better with screen reading software" 
-                  : "Optimizes interface elements and adds extra context for screen readers"
-                }
+                {t("worksWithScreenReaderSoftware")}
               </p>
             </div>
           </div>
@@ -207,7 +188,7 @@ const AccessibilitySettings = () => {
               <Globe className="h-5 w-5" aria-hidden="true" />
               <Label className="text-base font-medium">{t("language")}</Label>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-60 overflow-y-auto" role="radiogroup" aria-label={simpleMode ? "Language options" : "Language selection"}>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-60 overflow-y-auto" role="radiogroup" aria-label={t("languageOptions")}>
               {languages.map((lang) => (
                 <Button
                   key={lang.value}
@@ -216,7 +197,7 @@ const AccessibilitySettings = () => {
                   className="text-sm justify-start h-auto p-3"
                   role="radio"
                   aria-checked={language === lang.value}
-                  aria-label={`${simpleMode ? "Change language to" : "Set language to"} ${lang.label}`}
+                  aria-label={`${t("setLanguageTo")} ${lang.label}`}
                 >
                   <div className="flex items-center gap-2">
                     <span aria-hidden="true">{lang.flag}</span>
@@ -231,13 +212,13 @@ const AccessibilitySettings = () => {
             /* Quick Access Instructions - Only show in detailed mode */
             <Card className="bg-muted/50">
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Quick Access Tips</CardTitle>
+                <CardTitle className="text-lg">{t("quickAccessTips")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
-                <p><kbd className="px-2 py-1 bg-background rounded border">Tab</kbd> - Navigate between elements</p>
-                <p><kbd className="px-2 py-1 bg-background rounded border">Enter</kbd> or <kbd className="px-2 py-1 bg-background rounded border">Space</kbd> - Activate buttons</p>
-                <p><kbd className="px-2 py-1 bg-background rounded border">Esc</kbd> - Close dialogs or return to previous section</p>
-                <p><kbd className="px-2 py-1 bg-background rounded border">Ctrl</kbd> + <kbd className="px-2 py-1 bg-background rounded border">+</kbd> - Increase browser zoom</p>
+                <p><kbd className="px-2 py-1 bg-background rounded border">Tab</kbd> - {t("navigateBetweenElements")}</p>
+                <p><kbd className="px-2 py-1 bg-background rounded border">Enter</kbd> or <kbd className="px-2 py-1 bg-background rounded border">Space</kbd> - {t("activateButtons")}</p>
+                <p><kbd className="px-2 py-1 bg-background rounded border">Esc</kbd> - {t("closeDialogsReturn")}</p>
+                <p><kbd className="px-2 py-1 bg-background rounded border">Ctrl</kbd> + <kbd className="px-2 py-1 bg-background rounded border">+</kbd> - {t("increaseBrowserZoom")}</p>
               </CardContent>
             </Card>
           )}
