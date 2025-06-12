@@ -74,36 +74,36 @@ const AppContent = () => {
   const features = [
     {
       id: "assessment",
-      title: simpleMode ? "Check Your Money Health" : "Financial Health Assessment",
+      title: simpleMode ? t("checkMoneyHealth") : t("financialHealthAssessment"),
       description: simpleMode 
-        ? "See how you're doing with money and get help" 
+        ? t("checkMoneyHealthDesc") 
         : "Evaluate your current financial situation and get personalized insights",
       icon: Activity,
       color: "text-green-600"
     },
     {
       id: "budgeting",
-      title: simpleMode ? "Budget Helper" : "Budgeting Tools",
+      title: simpleMode ? t("budgetHelper") : "Budgeting Tools",
       description: simpleMode 
-        ? "Make a plan for your money that works for you" 
+        ? t("budgetHelperDesc") 
         : "Create and manage budgets that work for your lifestyle",
       icon: Calculator,
       color: "text-blue-600"
     },
     {
       id: "chat",
-      title: simpleMode ? "Money Helper Chat" : "AI Financial Advisor",
+      title: simpleMode ? t("moneyHelperChat") : "AI Financial Advisor",
       description: simpleMode 
-        ? "Ask questions and get help with money decisions" 
+        ? t("moneyHelperChatDesc") 
         : "Get instant advice and feedback on your financial decisions",
       icon: MessageCircle,
       color: "text-purple-600"
     },
     {
       id: "accessibility",
-      title: simpleMode ? "Make App Easier to Use" : "Accessibility Settings",
+      title: simpleMode ? t("makeAppEasier") : t("accessibilitySettings"),
       description: simpleMode 
-        ? "Change how the app looks and works for you" 
+        ? t("makeAppEasierDesc") 
         : "Customize the app to meet your accessibility needs",
       icon: Settings,
       color: "text-orange-600"
@@ -135,7 +135,7 @@ const AppContent = () => {
         href="#main-content" 
         className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-primary text-primary-foreground px-4 py-2 rounded z-50"
       >
-        {simpleMode ? "Skip to main content" : "Skip to main content"}
+        {t("skipToMain")}
       </a>
 
       {/* Header */}
@@ -191,7 +191,7 @@ const AppContent = () => {
                           onClick={() => setActiveSection(feature.id)}
                           aria-label={`${simpleMode ? "Go to" : "Go to"} ${feature.title}`}
                         >
-                          {simpleMode ? "Start" : "Get Started"}
+                          {simpleMode ? t("start") : t("getStarted")}
                         </Button>
                       </CardContent>
                     </Card>
@@ -204,7 +204,7 @@ const AppContent = () => {
                 <Card className="bg-primary/5 border-primary/20">
                   <CardHeader>
                     <CardTitle id="facts-heading" className="text-center">
-                      {simpleMode ? "Did You Know?" : "Did You Know?"}
+                      {t("didYouKnow")}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="text-center space-y-2">
@@ -215,7 +215,7 @@ const AppContent = () => {
                       onClick={() => setCurrentFact(getRandomFact())}
                       className="mt-3"
                     >
-                      {simpleMode ? "Show Another Fact" : "Show Another Fact"}
+                      {t("showAnotherFact")}
                     </Button>
                   </CardContent>
                 </Card>
@@ -229,9 +229,9 @@ const AppContent = () => {
                 variant="outline" 
                 onClick={() => setActiveSection("overview")}
                 className="mb-6"
-                aria-label={simpleMode ? "Go back" : "Return to overview"}
+                aria-label={simpleMode ? t("back") : t("backToOverview")}
               >
-                ← {simpleMode ? "Back" : "Back to Overview"}
+                ← {simpleMode ? t("back") : t("backToOverview")}
               </Button>
               <FinancialHealthAssessment />
             </div>
@@ -243,9 +243,9 @@ const AppContent = () => {
                 variant="outline" 
                 onClick={() => setActiveSection("overview")}
                 className="mb-6"
-                aria-label={simpleMode ? "Go back" : "Return to overview"}
+                aria-label={simpleMode ? t("back") : t("backToOverview")}
               >
-                ← {simpleMode ? "Back" : "Back to Overview"}
+                ← {simpleMode ? t("back") : t("backToOverview")}
               </Button>
               <BudgetingTools />
             </div>
@@ -257,9 +257,9 @@ const AppContent = () => {
                 variant="outline" 
                 onClick={() => setActiveSection("overview")}
                 className="mb-6"
-                aria-label={simpleMode ? "Go back" : "Return to overview"}
+                aria-label={simpleMode ? t("back") : t("backToOverview")}
               >
-                ← {simpleMode ? "Back" : "Back to Overview"}
+                ← {simpleMode ? t("back") : t("backToOverview")}
               </Button>
               <AIChat />
             </div>
@@ -271,9 +271,9 @@ const AppContent = () => {
                 variant="outline" 
                 onClick={() => setActiveSection("overview")}
                 className="mb-6"
-                aria-label={simpleMode ? "Go back" : "Return to overview"}
+                aria-label={simpleMode ? t("back") : t("backToOverview")}
               >
-                ← {simpleMode ? "Back" : "Back to Overview"}
+                ← {simpleMode ? t("back") : t("backToOverview")}
               </Button>
               <AccessibilitySettings />
             </div>

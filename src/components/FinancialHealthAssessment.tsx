@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { ThumbsUp, ThumbsDown, MessageCircle } from "lucide-react";
+import { useAccessibility } from "./AccessibilityProvider";
 
 interface FinancialData {
   monthlyIncome: number;
@@ -22,9 +23,16 @@ interface Assessment {
   savingsRate: number;
   emergencyMonths: number;
   debtToIncome: number;
+  breakdown: {
+    incomeExpenseScore: number;
+    emergencyFundScore: number;
+    debtScore: number;
+    savingsScore: number;
+  };
 }
 
 const FinancialHealthAssessment = () => {
+  const { t, simpleMode } = useAccessibility();
   const [formData, setFormData] = useState<FinancialData>({
     monthlyIncome: 0,
     monthlyExpenses: 0,
@@ -38,105 +46,160 @@ const FinancialHealthAssessment = () => {
   const { toast } = useToast();
 
   const calculateHealthScore = (data: FinancialData) => {
-    let score = 0;
-    const maxScore = 100;
+    let totalScore = 0;
+    const breakdown = {
+      incomeExpenseScore: 0,
+      emergencyFundScore: 0,
+      debtScore: 0,
+      savingsScore: 0
+    };
 
-    // Income vs Expenses (30 points)
-    const savingsRate = ((data.monthlyIncome - data.monthlyExpenses) / data.monthlyIncome) * 100;
-    if (savingsRate >= 20) score += 30;
-    else if (savingsRate >= 10) score += 20;
-    else if (savingsRate >= 0) score += 10;
+    // Income vs Expenses (30 points) - More granular scoring
+    const monthlySavings = data.monthlyIncome - data.monthlyExpenses;
+    const savingsRate = data.monthlyIncome > 0 ? (monthlySavings / data.monthlyIncome) * 100 : 0;
+    
+    if (savingsRate >= 30) breakdown.incomeExpenseScore = 30;
+    else if (savingsRate >= 20) breakdown.incomeExpenseScore = 28;
+    else if (savingsRate >= 15) breakdown.incomeExpenseScore = 25;
+    else if (savingsRate >= 10) breakdown.incomeExpenseScore = 20;
+    else if (savingsRate >= 5) breakdown.incomeExpenseScore = 15;
+    else if (savingsRate >= 0) breakdown.incomeExpenseScore = 10;
+    else if (savingsRate >= -5) breakdown.incomeExpenseScore = 5;
+    else breakdown.incomeExpenseScore = 0;
 
-    // Emergency Fund (25 points)
-    const emergencyMonths = data.emergencyFund / data.monthlyExpenses;
-    if (emergencyMonths >= 6) score += 25;
-    else if (emergencyMonths >= 3) score += 15;
-    else if (emergencyMonths >= 1) score += 10;
+    // Emergency Fund (25 points) - More precise calculation
+    const emergencyMonths = data.monthlyExpenses > 0 ? data.emergencyFund / data.monthlyExpenses : 0;
+    
+    if (emergencyMonths >= 6) breakdown.emergencyFundScore = 25;
+    else if (emergencyMonths >= 4) breakdown.emergencyFundScore = 20;
+    else if (emergencyMonths >= 3) breakdown.emergencyFundScore = 15;
+    else if (emergencyMonths >= 2) breakdown.emergencyFundScore = 12;
+    else if (emergencyMonths >= 1) breakdown.emergencyFundScore = 8;
+    else if (emergencyMonths >= 0.5) breakdown.emergencyFundScore = 5;
+    else breakdown.emergencyFundScore = 0;
 
-    // Debt to Income Ratio (25 points)
-    const debtToIncome = (data.debt / (data.monthlyIncome * 12)) * 100;
-    if (debtToIncome <= 20) score += 25;
-    else if (debtToIncome <= 40) score += 15;
-    else if (debtToIncome <= 60) score += 10;
+    // Debt to Income Ratio (25 points) - More accurate debt assessment
+    const annualIncome = data.monthlyIncome * 12;
+    const debtToIncome = annualIncome > 0 ? (data.debt / annualIncome) * 100 : 0;
+    
+    if (debtToIncome <= 10) breakdown.debtScore = 25;
+    else if (debtToIncome <= 20) breakdown.debtScore = 22;
+    else if (debtToIncome <= 30) breakdown.debtScore = 18;
+    else if (debtToIncome <= 40) breakdown.debtScore = 15;
+    else if (debtToIncome <= 50) breakdown.debtScore = 12;
+    else if (debtToIncome <= 60) breakdown.debtScore = 8;
+    else if (debtToIncome <= 80) breakdown.debtScore = 5;
+    else breakdown.debtScore = 0;
 
-    // Savings (20 points)
-    const savingsToIncome = (data.savings / (data.monthlyIncome * 12)) * 100;
-    if (savingsToIncome >= 50) score += 20;
-    else if (savingsToIncome >= 25) score += 15;
-    else if (savingsToIncome >= 10) score += 10;
+    // Savings to Income Ratio (20 points) - Better savings evaluation
+    const savingsToIncome = annualIncome > 0 ? (data.savings / annualIncome) * 100 : 0;
+    
+    if (savingsToIncome >= 100) breakdown.savingsScore = 20;
+    else if (savingsToIncome >= 75) breakdown.savingsScore = 18;
+    else if (savingsToIncome >= 50) breakdown.savingsScore = 16;
+    else if (savingsToIncome >= 30) breakdown.savingsScore = 14;
+    else if (savingsToIncome >= 20) breakdown.savingsScore = 12;
+    else if (savingsToIncome >= 10) breakdown.savingsScore = 8;
+    else if (savingsToIncome >= 5) breakdown.savingsScore = 5;
+    else breakdown.savingsScore = 0;
 
-    return Math.round((score / maxScore) * 100);
+    totalScore = breakdown.incomeExpenseScore + breakdown.emergencyFundScore + breakdown.debtScore + breakdown.savingsScore;
+
+    return {
+      score: Math.round(totalScore),
+      breakdown
+    };
   };
 
   const generateRecommendations = (data: FinancialData, score: number) => {
     const recommendations = [];
     
-    const savingsRate = ((data.monthlyIncome - data.monthlyExpenses) / data.monthlyIncome) * 100;
-    const emergencyMonths = data.emergencyFund / data.monthlyExpenses;
-    const debtToIncome = (data.debt / (data.monthlyIncome * 12)) * 100;
+    const savingsRate = data.monthlyIncome > 0 ? ((data.monthlyIncome - data.monthlyExpenses) / data.monthlyIncome) * 100 : 0;
+    const emergencyMonths = data.monthlyExpenses > 0 ? data.emergencyFund / data.monthlyExpenses : 0;
+    const debtToIncome = data.monthlyIncome > 0 ? (data.debt / (data.monthlyIncome * 12)) * 100 : 0;
 
-    // Savings rate recommendations
-    if (savingsRate < 5) {
-      recommendations.push("Start with saving just $1 per day - even small amounts build habits");
-      recommendations.push("Review your subscriptions and cancel unused services");
+    // More targeted recommendations based on specific issues
+    if (savingsRate < 0) {
+      recommendations.push("🚨 You're spending more than you earn - this needs immediate attention");
+      recommendations.push("📝 Track every expense for one week to identify where money is going");
+      recommendations.push("✂️ Cut non-essential expenses immediately (subscriptions, dining out, entertainment)");
+    } else if (savingsRate < 5) {
+      recommendations.push("💡 Start with micro-savings: save just $1-2 per day to build the habit");
+      recommendations.push("🔍 Use the 24-hour rule before any non-essential purchase over $50");
+      recommendations.push("📱 Cancel unused subscriptions and memberships");
     } else if (savingsRate < 10) {
-      recommendations.push("Great start! Try to gradually increase your savings rate to 10-15%");
-      recommendations.push("Consider automating your savings to make it effortless");
+      recommendations.push("📈 Great start! Try to gradually increase your savings rate to 10-15%");
+      recommendations.push("🤖 Set up automatic transfers to savings accounts");
+      recommendations.push("💰 Save any windfalls (tax refunds, bonuses) instead of spending them");
     } else if (savingsRate < 20) {
-      recommendations.push("You're doing well! Consider increasing savings when you get raises or bonuses");
+      recommendations.push("👍 You're doing well! Consider increasing savings when you get raises");
+      recommendations.push("📊 Start investing your excess savings for long-term growth");
     }
 
-    // Emergency fund recommendations
-    if (emergencyMonths < 1) {
-      recommendations.push("Start with a mini emergency fund of $500-$1000");
-      recommendations.push("Keep emergency funds in a separate, easily accessible savings account");
+    // Emergency fund specific advice
+    if (emergencyMonths < 0.5) {
+      recommendations.push("🚨 Start with a $500 starter emergency fund before anything else");
+      recommendations.push("🏦 Open a separate savings account specifically for emergencies");
+    } else if (emergencyMonths < 1) {
+      recommendations.push("💪 Build your emergency fund to $1,000 as quickly as possible");
+      recommendations.push("🎯 Aim for one month of expenses as your next milestone");
     } else if (emergencyMonths < 3) {
-      recommendations.push("Work toward 3 months of expenses in your emergency fund");
-      recommendations.push("Consider a high-yield savings account for your emergency fund");
+      recommendations.push("⬆️ Work toward 3 months of expenses in your emergency fund");
+      recommendations.push("💳 Consider a high-yield savings account for better returns");
     } else if (emergencyMonths < 6) {
-      recommendations.push("Excellent progress! Aim for 6 months of expenses for full security");
+      recommendations.push("🏆 Excellent progress! Aim for 6 months for complete security");
+      recommendations.push("💎 Consider money market accounts or CDs for better interest");
     }
 
-    // Debt recommendations
-    if (debtToIncome > 60) {
-      recommendations.push("Consider debt consolidation or speaking with a credit counselor");
-      recommendations.push("Focus on paying minimums on all debts, then extra on the highest interest rate debt");
+    // Debt-specific recommendations
+    if (debtToIncome > 80) {
+      recommendations.push("🆘 Your debt level is critical - consider credit counseling immediately");
+      recommendations.push("📞 Contact creditors to discuss payment plans or hardship programs");
+      recommendations.push("⚖️ Look into debt consolidation options");
+    } else if (debtToIncome > 60) {
+      recommendations.push("❄️ Use the debt avalanche: minimum payments on all, extra on highest interest");
+      recommendations.push("💼 Consider increasing income through side work or skill development");
+      recommendations.push("🔄 Look into balance transfer options for high-interest credit cards");
     } else if (debtToIncome > 40) {
-      recommendations.push("Try the debt avalanche method: pay minimums on all debts, extra on highest interest");
-      recommendations.push("Consider increasing your income through side work or skills development");
+      recommendations.push("⚡ Focus on paying extra principal on your highest interest debt");
+      recommendations.push("📉 Avoid taking on any new debt while paying down existing balances");
     } else if (debtToIncome > 20) {
-      recommendations.push("You're managing debt well - consider paying a bit extra on principal when possible");
+      recommendations.push("✅ Good debt management! Pay a bit extra on principal when possible");
+      recommendations.push("🎯 Set a target date to be debt-free and track progress");
     }
 
-    // Additional general recommendations based on score
-    if (score < 40) {
-      recommendations.push("Focus on one financial goal at a time to avoid overwhelm");
-      recommendations.push("Track your spending for a week to identify patterns");
-    } else if (score < 60) {
-      recommendations.push("Consider learning about investing basics for long-term wealth building");
-      recommendations.push("Review and optimize your insurance coverage");
+    // Score-based general advice
+    if (score < 30) {
+      recommendations.push("🎯 Focus on one financial goal at a time to avoid overwhelm");
+      recommendations.push("📚 Consider free financial education resources from your bank");
+      recommendations.push("👥 Find an accountability partner for your financial goals");
+    } else if (score < 50) {
+      recommendations.push("📖 Learn about basic investing principles for future wealth building");
+      recommendations.push("🛡️ Review your insurance coverage to protect your progress");
+    } else if (score < 70) {
+      recommendations.push("🚀 Consider advanced strategies like tax-advantaged retirement accounts");
+      recommendations.push("🏠 If renting, start researching homeownership if that's a goal");
     } else if (score >= 80) {
-      recommendations.push("Excellent financial health! Consider advanced strategies like tax optimization");
-      recommendations.push("You might be ready to explore additional investment opportunities");
+      recommendations.push("🌟 Outstanding! Consider tax optimization and estate planning");
+      recommendations.push("💎 Explore advanced investment options like index funds or ETFs");
+      recommendations.push("🎓 You might be ready to help others with their financial journey");
     }
 
-    if (recommendations.length === 0) {
-      recommendations.push("Outstanding financial management! Keep up the excellent work");
-    }
-
-    return recommendations;
+    return recommendations.slice(0, 6); // Limit to 6 most relevant recommendations
   };
 
-  const getAdditionalAdvice = (data: FinancialData) => {
+  const getAdditionalAdvice = () => {
     return [
-      "Create a written budget and review it monthly",
-      "Set up automatic transfers to savings accounts",
-      "Negotiate bills like insurance, phone, and internet annually",
-      "Use the 24-hour rule before making non-essential purchases over $100",
-      "Consider meal planning to reduce food waste and costs",
-      "Look into free financial education resources from your bank or credit union",
-      "Track your net worth quarterly to monitor progress",
-      "Consider increasing retirement contributions with each raise"
+      "📅 Create a written monthly budget and review it weekly",
+      "🔄 Automate bill payments to avoid late fees",
+      "📞 Negotiate bills (insurance, phone, internet) annually",
+      "🛒 Use the envelope method for discretionary spending categories",
+      "🍽️ Plan meals weekly to reduce food waste and costs",
+      "📈 Track your net worth monthly to see overall progress",
+      "🎯 Set SMART financial goals (Specific, Measurable, Achievable, Relevant, Time-bound)",
+      "📚 Read one financial book or article per month",
+      "💡 Increase retirement contributions with each raise (at least 1%)",
+      "🏪 Use cashback apps and compare prices before major purchases"
     ];
   };
 
@@ -145,52 +208,52 @@ const FinancialHealthAssessment = () => {
     
     if (formData.monthlyIncome <= 0) {
       toast({
-        title: "Invalid Input",
-        description: "Please enter a valid monthly income",
+        title: t("invalidInput"),
+        description: t("enterValidIncome"),
         variant: "destructive"
       });
       return;
     }
 
-    const score = calculateHealthScore(formData);
+    const { score, breakdown } = calculateHealthScore(formData);
     const recommendations = generateRecommendations(formData, score);
     
     setAssessment({
       score,
       recommendations,
-      savingsRate: ((formData.monthlyIncome - formData.monthlyExpenses) / formData.monthlyIncome) * 100,
-      emergencyMonths: formData.emergencyFund / formData.monthlyExpenses,
-      debtToIncome: (formData.debt / (formData.monthlyIncome * 12)) * 100
+      savingsRate: formData.monthlyIncome > 0 ? ((formData.monthlyIncome - formData.monthlyExpenses) / formData.monthlyIncome) * 100 : 0,
+      emergencyMonths: formData.monthlyExpenses > 0 ? formData.emergencyFund / formData.monthlyExpenses : 0,
+      debtToIncome: formData.monthlyIncome > 0 ? (formData.debt / (formData.monthlyIncome * 12)) * 100 : 0,
+      breakdown
     });
 
     setShowAdditionalAdvice(false);
 
     toast({
-      title: "Assessment Complete!",
-      description: `Your financial health score is ${score}/100`
+      title: t("assessmentComplete"),
+      description: `${t("scoreMessage")} ${score}/100`
     });
   };
 
   const handleFeedback = (helpful: boolean) => {
     if (helpful) {
       toast({
-        title: "Thank you!",
-        description: "We're glad the advice was helpful"
+        title: t("thankYou"),
+        description: t("adviceHelpful")
       });
     } else {
       setShowAdditionalAdvice(true);
       toast({
-        title: "More advice coming up!",
-        description: "Here are additional tips that might help"
+        title: t("moreAdvice"),
+        description: t("additionalTipsDesc")
       });
     }
   };
 
   const handleGoToAI = () => {
-    // This would navigate to AI chat - for now we'll show a message
     toast({
-      title: "AI Helper",
-      description: "Navigate to the AI Chat section for personalized assistance"
+      title: t("aiHelper"),
+      description: t("navigateToAI")
     });
   };
 
@@ -201,20 +264,34 @@ const FinancialHealthAssessment = () => {
     }));
   };
 
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return "text-green-600";
+    if (score >= 60) return "text-blue-600";
+    if (score >= 40) return "text-yellow-600";
+    return "text-red-600";
+  };
+
+  const getScoreLabel = (score: number) => {
+    if (score >= 80) return t("excellent");
+    if (score >= 60) return t("good");
+    if (score >= 40) return t("fair");
+    return t("needsImprovement");
+  };
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Financial Health Assessment</CardTitle>
+          <CardTitle>{t("financialHealthAssessment")}</CardTitle>
           <CardDescription>
-            Enter your financial information to get a personalized health score and recommendations
+            {t("financialHealthDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="income">Monthly Income ($)</Label>
+                <Label htmlFor="income">{t("monthlyIncome")}</Label>
                 <Input
                   id="income"
                   type="number"
@@ -223,7 +300,7 @@ const FinancialHealthAssessment = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="expenses">Monthly Expenses ($)</Label>
+                <Label htmlFor="expenses">{t("monthlyExpenses")}</Label>
                 <Input
                   id="expenses"
                   type="number"
@@ -232,7 +309,7 @@ const FinancialHealthAssessment = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="savings">Total Savings ($)</Label>
+                <Label htmlFor="savings">{t("totalSavings")}</Label>
                 <Input
                   id="savings"
                   type="number"
@@ -241,7 +318,7 @@ const FinancialHealthAssessment = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="debt">Total Debt ($)</Label>
+                <Label htmlFor="debt">{t("totalDebt")}</Label>
                 <Input
                   id="debt"
                   type="number"
@@ -250,7 +327,7 @@ const FinancialHealthAssessment = () => {
                 />
               </div>
               <div className="md:col-span-2">
-                <Label htmlFor="emergency">Emergency Fund ($)</Label>
+                <Label htmlFor="emergency">{t("emergencyFund")}</Label>
                 <Input
                   id="emergency"
                   type="number"
@@ -260,7 +337,7 @@ const FinancialHealthAssessment = () => {
               </div>
             </div>
             <Button type="submit" className="w-full">
-              Calculate My Financial Health Score
+              {t("calculateScore")}
             </Button>
           </form>
         </CardContent>
@@ -269,18 +346,16 @@ const FinancialHealthAssessment = () => {
       {assessment && (
         <Card>
           <CardHeader>
-            <CardTitle>Your Financial Health Score</CardTitle>
+            <CardTitle>{t("yourScore")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="text-center">
-              <div className="text-4xl font-bold text-primary mb-2">
+              <div className={`text-4xl font-bold mb-2 ${getScoreColor(assessment.score)}`}>
                 {assessment.score}/100
               </div>
               <Progress value={assessment.score} className="w-full" />
               <p className="text-muted-foreground mt-2">
-                {assessment.score >= 80 ? "Excellent" : 
-                 assessment.score >= 60 ? "Good" : 
-                 assessment.score >= 40 ? "Fair" : "Needs Improvement"}
+                {getScoreLabel(assessment.score)}
               </p>
             </div>
 
@@ -289,24 +364,24 @@ const FinancialHealthAssessment = () => {
                 <div className="text-2xl font-semibold">
                   {assessment.savingsRate.toFixed(1)}%
                 </div>
-                <div className="text-sm text-muted-foreground">Savings Rate</div>
+                <div className="text-sm text-muted-foreground">{t("savingsRate")}</div>
               </div>
               <div className="p-4 bg-muted rounded-lg">
                 <div className="text-2xl font-semibold">
                   {assessment.emergencyMonths.toFixed(1)}
                 </div>
-                <div className="text-sm text-muted-foreground">Emergency Months</div>
+                <div className="text-sm text-muted-foreground">{t("emergencyMonths")}</div>
               </div>
               <div className="p-4 bg-muted rounded-lg">
                 <div className="text-2xl font-semibold">
                   {assessment.debtToIncome.toFixed(1)}%
                 </div>
-                <div className="text-sm text-muted-foreground">Debt to Income</div>
+                <div className="text-sm text-muted-foreground">{t("debtToIncome")}</div>
               </div>
             </div>
 
             <div>
-              <h3 className="font-semibold mb-3">Personalized Recommendations:</h3>
+              <h3 className="font-semibold mb-3">{t("recommendations")}</h3>
               <ul className="space-y-2">
                 {assessment.recommendations.map((rec: string, index: number) => (
                   <li key={index} className="flex items-start gap-2">
@@ -319,9 +394,9 @@ const FinancialHealthAssessment = () => {
 
             {showAdditionalAdvice && (
               <div>
-                <h3 className="font-semibold mb-3">Additional Tips:</h3>
+                <h3 className="font-semibold mb-3">{t("additionalTips")}</h3>
                 <ul className="space-y-2">
-                  {getAdditionalAdvice(formData).map((tip: string, index: number) => (
+                  {getAdditionalAdvice().map((tip: string, index: number) => (
                     <li key={index} className="flex items-start gap-2">
                       <span className="text-primary">•</span>
                       <span className="text-muted-foreground">{tip}</span>
@@ -332,7 +407,7 @@ const FinancialHealthAssessment = () => {
             )}
 
             <div className="border-t pt-4">
-              <p className="text-sm text-muted-foreground mb-3">Was this advice helpful?</p>
+              <p className="text-sm text-muted-foreground mb-3">{t("wasHelpful")}</p>
               <div className="flex gap-2">
                 <Button 
                   variant="outline" 
@@ -341,7 +416,7 @@ const FinancialHealthAssessment = () => {
                   className="flex items-center gap-2"
                 >
                   <ThumbsUp className="h-4 w-4" />
-                  Helpful
+                  {t("helpful")}
                 </Button>
                 <Button 
                   variant="outline" 
@@ -350,7 +425,7 @@ const FinancialHealthAssessment = () => {
                   className="flex items-center gap-2"
                 >
                   <ThumbsDown className="h-4 w-4" />
-                  Not Helpful
+                  {t("notHelpful")}
                 </Button>
                 <Button 
                   variant="default" 
@@ -359,7 +434,7 @@ const FinancialHealthAssessment = () => {
                   className="flex items-center gap-2 ml-auto"
                 >
                   <MessageCircle className="h-4 w-4" />
-                  Get AI Help
+                  {t("getAIHelp")}
                 </Button>
               </div>
             </div>

@@ -3,7 +3,8 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ChevronLeft, ChevronRight, Activity, CheckCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Activity } from "lucide-react";
+import { useAccessibility } from "./AccessibilityProvider";
 
 interface TutorialProps {
   onComplete: () => void;
@@ -11,37 +12,38 @@ interface TutorialProps {
 }
 
 const Tutorial = ({ onComplete, onStartAssessment }: TutorialProps) => {
+  const { t } = useAccessibility();
   const [currentStep, setCurrentStep] = useState(0);
 
   const tutorialSteps = [
     {
-      title: "Welcome to The Correct Spender!",
-      content: "This app helps you manage your money better. Let's take a quick tour to show you how everything works.",
+      title: t("tutorialWelcome"),
+      content: t("tutorialWelcomeDesc"),
       icon: "👋"
     },
     {
-      title: "Financial Health Assessment",
-      content: "Start here to check how you're doing with money. You'll get a score and personalized advice to improve your finances.",
+      title: t("tutorialAssessment"),
+      content: t("tutorialAssessmentDesc"),
       icon: "📊"
     },
     {
-      title: "Budget Helper",
-      content: "Create a budget plan that works for your income. The app will suggest the best budget rule for your situation.",
+      title: t("tutorialBudget"),
+      content: t("tutorialBudgetDesc"),
       icon: "💰"
     },
     {
-      title: "AI Money Helper",
-      content: "Ask questions and get instant help with money decisions. It's like having a financial advisor available 24/7.",
+      title: t("tutorialAI"),
+      content: t("tutorialAIDesc"),
       icon: "🤖"
     },
     {
-      title: "Accessibility Settings",
-      content: "Make the app work better for you. Change text size, colors, language, and more to fit your needs.",
+      title: t("tutorialAccessibility"),
+      content: t("tutorialAccessibilityDesc"),
       icon: "⚙️"
     },
     {
-      title: "Ready to Start!",
-      content: "We recommend starting with the Financial Health Assessment to understand your current situation and get personalized advice.",
+      title: t("tutorialReady"),
+      content: t("tutorialReadyDesc"),
       icon: "🚀"
     }
   ];
@@ -70,9 +72,9 @@ const Tutorial = ({ onComplete, onStartAssessment }: TutorialProps) => {
       <Card className="w-full max-w-2xl">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-2xl">App Tutorial</CardTitle>
+            <CardTitle className="text-2xl">{t("appTutorial")}</CardTitle>
             <Button variant="ghost" size="sm" onClick={onComplete}>
-              Skip Tutorial
+              {t("skipTutorial")}
             </Button>
           </div>
           <Progress value={progress} className="w-full" />
@@ -101,22 +103,22 @@ const Tutorial = ({ onComplete, onStartAssessment }: TutorialProps) => {
               className="flex items-center gap-2"
             >
               <ChevronLeft className="h-4 w-4" />
-              Previous
+              {t("previous")}
             </Button>
 
             {currentStep === tutorialSteps.length - 1 ? (
               <div className="flex gap-2">
                 <Button variant="outline" onClick={onComplete}>
-                  Explore on My Own
+                  {t("exploreMyOwn")}
                 </Button>
                 <Button onClick={handleStartAssessment} className="flex items-center gap-2">
                   <Activity className="h-4 w-4" />
-                  Start Assessment
+                  {t("startAssessment")}
                 </Button>
               </div>
             ) : (
               <Button onClick={nextStep} className="flex items-center gap-2">
-                Next
+                {t("next")}
                 <ChevronRight className="h-4 w-4" />
               </Button>
             )}
