@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, Calculator, MessageCircle, Activity, Settings } from "lucide-react";
 import FinancialHealthAssessment from "@/components/FinancialHealthAssessment";
 import BudgetingTools from "@/components/BudgetingTools";
-import AIChat from "@/components/AIChat";
+import EnhancedAIChat from "@/components/EnhancedAIChat";
 import AccessibilitySettings from "@/components/AccessibilitySettings";
 import LanguageSelector from "@/components/LanguageSelector";
 import Tutorial from "@/components/Tutorial";
@@ -254,7 +253,7 @@ const Index = () => {
               >
                 ← {simpleMode ? t("back") : t("backToOverview")}
               </Button>
-              <AIChat />
+              <EnhancedAIChat />
             </div>
           )}
 

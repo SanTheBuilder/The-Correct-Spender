@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { DollarSign, Mail, Lock, User } from "lucide-react";
+import { DollarSign, Mail, Lock, User, UserCheck } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { useAccessibility } from "@/components/AccessibilityProvider";
@@ -17,8 +17,9 @@ const Auth = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [guestLoading, setGuestLoading] = useState(false);
   
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, signInAsGuest } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t, simpleMode } = useAccessibility();
@@ -62,6 +63,30 @@ const Auth = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGuestSignIn = async () => {
+    setGuestLoading(true);
+    try {
+      const { error } = await signInAsGuest();
+      if (error) {
+        toast({
+          title: "Guest Sign-in Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        navigate("/");
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign in as guest. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setGuestLoading(false);
     }
   };
 
@@ -164,6 +189,30 @@ const Auth = () => {
                 }
               </Button>
             </form>
+
+            <div className="mt-4">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    Or continue as
+                  </span>
+                </div>
+              </div>
+              
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full mt-4"
+                onClick={handleGuestSignIn}
+                disabled={guestLoading}
+              >
+                <UserCheck className="h-4 w-4 mr-2" />
+                {guestLoading ? "Signing in..." : "Continue as Guest"}
+              </Button>
+            </div>
 
             <div className="mt-6 text-center">
               <Button

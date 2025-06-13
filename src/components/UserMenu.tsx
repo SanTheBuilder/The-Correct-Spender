@@ -14,14 +14,16 @@ import { useAuth } from "./AuthProvider";
 import { useAccessibility } from "./AccessibilityProvider";
 
 const UserMenu = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isGuest } = useAuth();
   const { simpleMode, t } = useAccessibility();
 
-  if (!user) return null;
+  if (!user && !isGuest) return null;
 
-  const userInitials = user.email
-    ? user.email.substring(0, 2).toUpperCase()
-    : "U";
+  const userInitials = isGuest 
+    ? "G" 
+    : user?.email
+      ? user.email.substring(0, 2).toUpperCase()
+      : "U";
 
   const handleSignOut = async () => {
     await signOut();
@@ -40,10 +42,10 @@ const UserMenu = () => {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">
-              {simpleMode ? "Your Account" : "Account"}
+              {isGuest ? "Guest User" : (simpleMode ? "Your Account" : "Account")}
             </p>
             <p className="text-xs leading-none text-muted-foreground">
-              {user.email}
+              {isGuest ? "Limited features available" : user?.email}
             </p>
           </div>
         </DropdownMenuLabel>
@@ -59,7 +61,7 @@ const UserMenu = () => {
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />
-          <span>{simpleMode ? "Sign Out" : "Log out"}</span>
+          <span>{isGuest ? "Exit Guest Mode" : (simpleMode ? "Sign Out" : "Log out")}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -7,8 +7,10 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isGuest: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, firstName?: string, lastName?: string) => Promise<{ error: any }>;
+  signInAsGuest: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -26,14 +28,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
+    // Check for guest mode
+    const guestMode = localStorage.getItem('guest-mode');
+    if (guestMode === 'true') {
+      setIsGuest(true);
+      setLoading(false);
+      return;
+    }
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
+        setIsGuest(false);
         setLoading(false);
       }
     );
@@ -73,16 +85,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
+  const signInAsGuest = async () => {
+    try {
+      localStorage.setItem('guest-mode', 'true');
+      setIsGuest(true);
+      setLoading(false);
+      return { error: null };
+    } catch (error) {
+      return { error };
+    }
+  };
+
   const signOut = async () => {
-    await supabase.auth.signOut();
+    if (isGuest) {
+      localStorage.removeItem('guest-mode');
+      setIsGuest(false);
+    } else {
+      await supabase.auth.signOut();
+    }
   };
 
   const value = {
     user,
     session,
     loading,
+    isGuest,
     signIn,
     signUp,
+    signInAsGuest,
     signOut,
   };
 
