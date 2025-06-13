@@ -124,8 +124,20 @@ const Index = () => {
               {(user || isGuest) && (
                 <div className="text-sm text-muted-foreground">
                   {isGuest 
-                    ? `${simpleMode ? "Guest Mode" : "Guest User"}` 
-                    : `${simpleMode ? "Welcome" : "Welcome back"}, ${user?.email || "Guest"}`
+                    ? `${simpleMode ? 
+                        (language === 'es' ? "Modo Invitado" : 
+                         language === 'fr' ? "Mode Invité" : 
+                         "Guest Mode") : 
+                        (language === 'es' ? "Usuario Invitado" : 
+                         language === 'fr' ? "Utilisateur Invité" : 
+                         "Guest User")}` 
+                    : `${simpleMode ? 
+                        (language === 'es' ? "Bienvenido" : 
+                         language === 'fr' ? "Bienvenue" : 
+                         "Welcome") : 
+                        (language === 'es' ? "Bienvenido de nuevo" : 
+                         language === 'fr' ? "Bon retour" : 
+                         "Welcome back")}, ${user?.email || "Guest"}`
                   }
                 </div>
               )}
@@ -142,20 +154,24 @@ const Index = () => {
               {/* Welcome Section */}
               <section className="text-center space-y-4" aria-labelledby="welcome-heading">
                 <h2 id="welcome-heading" className="text-3xl font-bold text-foreground">
-                  {isGuest ? t("welcomeGuestTitle") || "Welcome, Guest!" : t("welcomeTitle")}
+                  {isGuest ? t("welcomeGuestTitle") : t("welcomeTitle")}
                 </h2>
                 <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                  {isGuest 
-                    ? t("welcomeGuestDescription") || "Explore our financial tools in guest mode. Sign up for a full experience!"
-                    : t("welcomeDescription")
-                  }
+                  {isGuest ? t("welcomeGuestDescription") : t("welcomeDescription")}
                 </p>
               </section>
 
-              {/* Features Grid */}
+              {/* Features Grid - All features available for both guest and registered users */}
               <section aria-labelledby="features-heading">
                 <h2 id="features-heading" className="sr-only">
-                  {simpleMode ? "Things you can do" : "Available Features"}
+                  {simpleMode ? 
+                    (language === 'es' ? "Cosas que puedes hacer" : 
+                     language === 'fr' ? "Choses que vous pouvez faire" : 
+                     "Things you can do") : 
+                    (language === 'es' ? "Funciones Disponibles" : 
+                     language === 'fr' ? "Fonctionnalités Disponibles" : 
+                     "Available Features")
+                  }
                 </h2>
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6" role="grid">
                   {[
@@ -164,25 +180,35 @@ const Index = () => {
                       title: simpleMode ? t("checkMoneyHealth") : t("financialHealthAssessment"),
                       description: simpleMode 
                         ? t("checkMoneyHealthDesc") 
-                        : "Evaluate your current financial situation and get personalized insights",
+                        : (isGuest ? 
+                           (language === 'es' ? "Evalúa tu situación financiera actual (sin guardar resultados)" :
+                            language === 'fr' ? "Évaluez votre situation financière actuelle (sans sauvegarder les résultats)" :
+                            "Evaluate your current financial situation (results not saved)") :
+                           "Evaluate your current financial situation and get personalized insights"),
                       icon: Activity,
                       color: "text-green-600"
                     },
                     {
                       id: "budgeting",
-                      title: simpleMode ? t("budgetHelper") : "Budgeting Tools",
+                      title: simpleMode ? t("budgetHelper") : (language === 'es' ? "Herramientas de Presupuesto" : language === 'fr' ? "Outils de Budget" : "Budgeting Tools"),
                       description: simpleMode 
                         ? t("budgetHelperDesc") 
-                        : "Create and manage budgets that work for your lifestyle",
+                        : (isGuest ?
+                           (language === 'es' ? "Crea y gestiona presupuestos (sin guardar)" :
+                            language === 'fr' ? "Créez et gérez des budgets (sans sauvegarder)" :
+                            "Create and manage budgets (not saved)") :
+                           "Create and manage budgets that work for your lifestyle"),
                       icon: Calculator,
                       color: "text-blue-600"
                     },
                     {
                       id: "chat",
-                      title: simpleMode ? t("moneyHelperChat") : "AI Financial Advisor",
+                      title: simpleMode ? t("moneyHelperChat") : (language === 'es' ? "Asesor Financiero IA" : language === 'fr' ? "Conseiller Financier IA" : "AI Financial Advisor"),
                       description: simpleMode 
                         ? t("moneyHelperChatDesc") 
-                        : "Get instant advice and feedback on your financial decisions",
+                        : (language === 'es' ? "Obtén consejos instantáneos sobre tus decisiones financieras" :
+                           language === 'fr' ? "Obtenez des conseils instantanés sur vos décisions financières" :
+                           "Get instant advice and feedback on your financial decisions"),
                       icon: MessageCircle,
                       color: "text-purple-600"
                     },
@@ -191,7 +217,9 @@ const Index = () => {
                       title: simpleMode ? t("makeAppEasier") : t("accessibilitySettings"),
                       description: simpleMode 
                         ? t("makeAppEasierDesc") 
-                        : "Customize the app to meet your accessibility needs",
+                        : (language === 'es' ? "Personaliza la app para tus necesidades de accesibilidad" :
+                           language === 'fr' ? "Personnalisez l'app pour vos besoins d'accessibilité" :
+                           "Customize the app to meet your accessibility needs"),
                       icon: Settings,
                       color: "text-orange-600"
                     }
@@ -222,6 +250,24 @@ const Index = () => {
                   ))}
                 </div>
               </section>
+
+              {/* Guest mode notification */}
+              {isGuest && (
+                <section className="bg-muted/50 border border-muted rounded-lg p-4">
+                  <div className="text-center space-y-2">
+                    <h3 className="text-lg font-semibold">
+                      {language === 'es' ? "💡 Modo Invitado Activo" :
+                       language === 'fr' ? "💡 Mode Invité Actif" :
+                       "💡 Guest Mode Active"}
+                    </h3>
+                    <p className="text-muted-foreground">
+                      {language === 'es' ? "Todas las funciones están disponibles para probar, pero tus datos no se guardarán. Regístrate para obtener acceso completo." :
+                       language === 'fr' ? "Toutes les fonctionnalités sont disponibles pour essayer, mais vos données ne seront pas sauvegardées. Inscrivez-vous pour un accès complet." :
+                       "All features are available to try, but your data won't be saved. Sign up for full access."}
+                    </p>
+                  </div>
+                </section>
+              )}
 
               {/* Dynamic Financial Fact */}
               <section aria-labelledby="facts-heading">
