@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +8,9 @@ import AIChat from "@/components/AIChat";
 import AccessibilitySettings from "@/components/AccessibilitySettings";
 import LanguageSelector from "@/components/LanguageSelector";
 import Tutorial from "@/components/Tutorial";
+import UserMenu from "@/components/UserMenu";
 import { AccessibilityProvider, useAccessibility } from "@/components/AccessibilityProvider";
+import { useAuth } from "@/components/AuthProvider";
 import { getRandomFact } from "@/utils/financialData";
 
 const AppContent = () => {
@@ -18,6 +19,7 @@ const AppContent = () => {
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentFact, setCurrentFact] = useState<string>("");
   const { language, setLanguage, simpleMode, t } = useAccessibility();
+  const { user } = useAuth();
 
   // Initialize random fact on mount and page refresh
   useEffect(() => {
@@ -71,63 +73,6 @@ const AppContent = () => {
     setActiveSection("assessment");
   };
 
-  const features = [
-    {
-      id: "assessment",
-      title: simpleMode ? t("checkMoneyHealth") : t("financialHealthAssessment"),
-      description: simpleMode 
-        ? t("checkMoneyHealthDesc") 
-        : "Evaluate your current financial situation and get personalized insights",
-      icon: Activity,
-      color: "text-green-600"
-    },
-    {
-      id: "budgeting",
-      title: simpleMode ? t("budgetHelper") : "Budgeting Tools",
-      description: simpleMode 
-        ? t("budgetHelperDesc") 
-        : "Create and manage budgets that work for your lifestyle",
-      icon: Calculator,
-      color: "text-blue-600"
-    },
-    {
-      id: "chat",
-      title: simpleMode ? t("moneyHelperChat") : "AI Financial Advisor",
-      description: simpleMode 
-        ? t("moneyHelperChatDesc") 
-        : "Get instant advice and feedback on your financial decisions",
-      icon: MessageCircle,
-      color: "text-purple-600"
-    },
-    {
-      id: "accessibility",
-      title: simpleMode ? t("makeAppEasier") : t("accessibilitySettings"),
-      description: simpleMode 
-        ? t("makeAppEasierDesc") 
-        : "Customize the app to meet your accessibility needs",
-      icon: Settings,
-      color: "text-orange-600"
-    }
-  ];
-
-  if (showLanguageSelector) {
-    return (
-      <LanguageSelector 
-        onLanguageSelect={handleLanguageSelect}
-        onContinue={handleContinue}
-      />
-    );
-  }
-
-  if (showTutorial) {
-    return (
-      <Tutorial 
-        onComplete={handleTutorialComplete}
-        onStartAssessment={handleStartAssessment}
-      />
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background">
       {/* Skip to main content link for screen readers */}
@@ -141,11 +86,21 @@ const AppContent = () => {
       {/* Header */}
       <header className="border-b" role="banner">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-3">
-            <DollarSign className="h-8 w-8 text-primary" aria-hidden="true" />
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">{t("appTitle")}</h1>
-              <p className="text-muted-foreground">{t("appSubtitle")}</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <DollarSign className="h-8 w-8 text-primary" aria-hidden="true" />
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">{t("appTitle")}</h1>
+                <p className="text-muted-foreground">{t("appSubtitle")}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              {user && (
+                <div className="text-sm text-muted-foreground">
+                  {simpleMode ? "Welcome" : "Welcome back"}, {user.email}
+                </div>
+              )}
+              <UserMenu />
             </div>
           </div>
         </div>
@@ -171,7 +126,44 @@ const AppContent = () => {
                   {simpleMode ? "Things you can do" : "Available Features"}
                 </h2>
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6" role="grid">
-                  {features.map((feature) => (
+                  {[
+                    {
+                      id: "assessment",
+                      title: simpleMode ? t("checkMoneyHealth") : t("financialHealthAssessment"),
+                      description: simpleMode 
+                        ? t("checkMoneyHealthDesc") 
+                        : "Evaluate your current financial situation and get personalized insights",
+                      icon: Activity,
+                      color: "text-green-600"
+                    },
+                    {
+                      id: "budgeting",
+                      title: simpleMode ? t("budgetHelper") : "Budgeting Tools",
+                      description: simpleMode 
+                        ? t("budgetHelperDesc") 
+                        : "Create and manage budgets that work for your lifestyle",
+                      icon: Calculator,
+                      color: "text-blue-600"
+                    },
+                    {
+                      id: "chat",
+                      title: simpleMode ? t("moneyHelperChat") : "AI Financial Advisor",
+                      description: simpleMode 
+                        ? t("moneyHelperChatDesc") 
+                        : "Get instant advice and feedback on your financial decisions",
+                      icon: MessageCircle,
+                      color: "text-purple-600"
+                    },
+                    {
+                      id: "accessibility",
+                      title: simpleMode ? t("makeAppEasier") : t("accessibilitySettings"),
+                      description: simpleMode 
+                        ? t("makeAppEasierDesc") 
+                        : "Customize the app to meet your accessibility needs",
+                      icon: Settings,
+                      color: "text-orange-600"
+                    }
+                  ].map((feature) => (
                     <Card 
                       key={feature.id} 
                       className="cursor-pointer hover:shadow-lg transition-shadow focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2"

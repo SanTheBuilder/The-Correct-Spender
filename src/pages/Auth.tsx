@@ -1,0 +1,187 @@
+
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { DollarSign, Mail, Lock, User } from "lucide-react";
+import { useAuth } from "@/components/AuthProvider";
+import { useToast } from "@/hooks/use-toast";
+import { useAccessibility } from "@/components/AccessibilityProvider";
+
+const Auth = () => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [loading, setLoading] = useState(false);
+  
+  const { signIn, signUp } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const { t, simpleMode } = useAccessibility();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      let error;
+      if (isLogin) {
+        ({ error } = await signIn(email, password));
+      } else {
+        ({ error } = await signUp(email, password, firstName, lastName));
+      }
+
+      if (error) {
+        toast({
+          title: simpleMode ? "Problem signing in" : "Authentication Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        if (isLogin) {
+          navigate("/");
+        } else {
+          toast({
+            title: simpleMode ? "Account created!" : "Account created successfully",
+            description: simpleMode 
+              ? "Check your email to verify your account" 
+              : "Please check your email to verify your account before signing in.",
+          });
+          setIsLogin(true);
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <DollarSign className="h-10 w-10 text-primary" aria-hidden="true" />
+            <h1 className="text-3xl font-bold text-foreground">{t("appTitle")}</h1>
+          </div>
+          <p className="text-muted-foreground">{t("appSubtitle")}</p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl text-center">
+              {isLogin 
+                ? (simpleMode ? "Sign In" : "Welcome Back") 
+                : (simpleMode ? "Create Account" : "Create Your Account")
+              }
+            </CardTitle>
+            <CardDescription className="text-center">
+              {isLogin 
+                ? (simpleMode ? "Enter your details to sign in" : "Enter your credentials to access your financial dashboard")
+                : (simpleMode ? "Fill in your details to get started" : "Join us to start your financial wellness journey")
+              }
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {!isLogin && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">
+                      <User className="h-4 w-4 inline mr-2" aria-hidden="true" />
+                      {simpleMode ? "First Name" : "First Name"}
+                    </Label>
+                    <Input
+                      id="firstName"
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="John"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">
+                      <User className="h-4 w-4 inline mr-2" aria-hidden="true" />
+                      {simpleMode ? "Last Name" : "Last Name"}
+                    </Label>
+                    <Input
+                      id="lastName"
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Doe"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="email">
+                  <Mail className="h-4 w-4 inline mr-2" aria-hidden="true" />
+                  {simpleMode ? "Email" : "Email Address"}
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="john@example.com"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">
+                  <Lock className="h-4 w-4 inline mr-2" aria-hidden="true" />
+                  {simpleMode ? "Password" : "Password"}
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading 
+                  ? (simpleMode ? "Please wait..." : "Processing...") 
+                  : isLogin 
+                    ? (simpleMode ? "Sign In" : "Sign In") 
+                    : (simpleMode ? "Create Account" : "Create Account")
+                }
+              </Button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <Button
+                variant="link"
+                onClick={() => setIsLogin(!isLogin)}
+                className="text-sm"
+              >
+                {isLogin 
+                  ? (simpleMode ? "Need an account? Sign up" : "Don't have an account? Sign up") 
+                  : (simpleMode ? "Have an account? Sign in" : "Already have an account? Sign in")
+                }
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default Auth;

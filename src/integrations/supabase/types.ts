@@ -9,7 +9,117 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      budgets: {
+        Row: {
+          categories: Json
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          period: string
+          total_income: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          categories?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          period?: string
+          total_income?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          categories?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          period?: string
+          total_income?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      financial_assessments: {
+        Row: {
+          assessment_score: number | null
+          created_at: string
+          debt: number | null
+          emergency_fund: number | null
+          expenses: number | null
+          financial_goals: string[] | null
+          id: string
+          income: number | null
+          recommendations: string[] | null
+          risk_tolerance: string | null
+          savings: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assessment_score?: number | null
+          created_at?: string
+          debt?: number | null
+          emergency_fund?: number | null
+          expenses?: number | null
+          financial_goals?: string[] | null
+          id?: string
+          income?: number | null
+          recommendations?: string[] | null
+          risk_tolerance?: string | null
+          savings?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assessment_score?: number | null
+          created_at?: string
+          debt?: number | null
+          emergency_fund?: number | null
+          expenses?: number | null
+          financial_goals?: string[] | null
+          id?: string
+          income?: number | null
+          recommendations?: string[] | null
+          risk_tolerance?: string | null
+          savings?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
