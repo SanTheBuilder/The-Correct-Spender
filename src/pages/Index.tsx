@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,11 +10,11 @@ import AccessibilitySettings from "@/components/AccessibilitySettings";
 import LanguageSelector from "@/components/LanguageSelector";
 import Tutorial from "@/components/Tutorial";
 import UserMenu from "@/components/UserMenu";
-import { AccessibilityProvider, useAccessibility } from "@/components/AccessibilityProvider";
+import { useAccessibility } from "@/components/AccessibilityProvider";
 import { useAuth } from "@/components/AuthProvider";
 import { getRandomFact } from "@/utils/financialData";
 
-const AppContent = () => {
+const Index = () => {
   const [activeSection, setActiveSection] = useState<string>("overview");
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -273,14 +274,6 @@ const AppContent = () => {
         </main>
       </div>
     </div>
-  );
-};
-
-const Index = () => {
-  return (
-    <AccessibilityProvider>
-      <AppContent />
-    </AccessibilityProvider>
   );
 };
 
