@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +20,7 @@ const Index = () => {
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentFact, setCurrentFact] = useState<string>("");
   const { language, setLanguage, simpleMode, t } = useAccessibility();
-  const { user } = useAuth();
+  const { user, isGuest } = useAuth();
 
   // Initialize random fact on mount and page refresh
   useEffect(() => {
@@ -27,28 +28,32 @@ const Index = () => {
   }, []);
 
   useEffect(() => {
-    // Check if user has completed setup before
-    const savedPrefs = localStorage.getItem("user-preferences");
+    // Check if user/guest has completed setup before
+    const storageKey = isGuest ? "guest-preferences" : "user-preferences";
+    const savedPrefs = localStorage.getItem(storageKey);
+    
     if (!savedPrefs) {
       setShowLanguageSelector(true);
     } else {
-      // Check if user has seen tutorial
+      // Check if user/guest has seen tutorial
       const prefs = JSON.parse(savedPrefs);
       if (!prefs.hasSeenTutorial) {
         setShowTutorial(true);
       }
     }
-  }, []);
+  }, [isGuest]);
 
   const handleLanguageSelect = (selectedLanguage: string) => {
     setLanguage(selectedLanguage);
+    const storageKey = isGuest ? "guest-preferences" : "user-preferences";
     const prefs = {
       language: selectedLanguage,
       hasCompletedSetup: true,
       setupDate: new Date().toISOString(),
-      hasSeenTutorial: false
+      hasSeenTutorial: false,
+      userType: isGuest ? "guest" : "registered"
     };
-    localStorage.setItem("user-preferences", JSON.stringify(prefs));
+    localStorage.setItem(storageKey, JSON.stringify(prefs));
     setShowLanguageSelector(false);
     setShowTutorial(true);
   };
@@ -61,17 +66,38 @@ const Index = () => {
   const handleTutorialComplete = () => {
     setShowTutorial(false);
     // Update preferences to mark tutorial as seen
-    const savedPrefs = localStorage.getItem("user-preferences");
+    const storageKey = isGuest ? "guest-preferences" : "user-preferences";
+    const savedPrefs = localStorage.getItem(storageKey);
     if (savedPrefs) {
       const prefs = JSON.parse(savedPrefs);
       prefs.hasSeenTutorial = true;
-      localStorage.setItem("user-preferences", JSON.stringify(prefs));
+      localStorage.setItem(storageKey, JSON.stringify(prefs));
     }
   };
 
   const handleStartAssessment = () => {
     setActiveSection("assessment");
   };
+
+  // Show language selector if needed
+  if (showLanguageSelector) {
+    return (
+      <LanguageSelector 
+        onLanguageSelect={handleLanguageSelect} 
+        onContinue={handleContinue}
+      />
+    );
+  }
+
+  // Show tutorial if needed
+  if (showTutorial) {
+    return (
+      <Tutorial 
+        onComplete={handleTutorialComplete}
+        onStartAssessment={handleStartAssessment}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -95,9 +121,12 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              {user && (
+              {(user || isGuest) && (
                 <div className="text-sm text-muted-foreground">
-                  {simpleMode ? "Welcome" : "Welcome back"}, {user.email}
+                  {isGuest 
+                    ? (simpleMode ? "Guest Mode" : "Guest User") 
+                    : (simpleMode ? "Welcome" : "Welcome back"), {user?.email || "Guest"}
+                  }
                 </div>
               )}
               <UserMenu />
@@ -113,10 +142,13 @@ const Index = () => {
               {/* Welcome Section */}
               <section className="text-center space-y-4" aria-labelledby="welcome-heading">
                 <h2 id="welcome-heading" className="text-3xl font-bold text-foreground">
-                  {t("welcomeTitle")}
+                  {isGuest ? t("welcomeGuestTitle") || "Welcome, Guest!" : t("welcomeTitle")}
                 </h2>
                 <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                  {t("welcomeDescription")}
+                  {isGuest 
+                    ? t("welcomeGuestDescription") || "Explore our financial tools in guest mode. Sign up for a full experience!"
+                    : t("welcomeDescription")
+                  }
                 </p>
               </section>
 

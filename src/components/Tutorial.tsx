@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ChevronLeft, ChevronRight, Activity } from "lucide-react";
 import { useAccessibility } from "./AccessibilityProvider";
+import { useAuth } from "./AuthProvider";
 
 interface TutorialProps {
   onComplete: () => void;
@@ -13,27 +14,36 @@ interface TutorialProps {
 
 const Tutorial = ({ onComplete, onStartAssessment }: TutorialProps) => {
   const { t } = useAccessibility();
+  const { isGuest } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
 
   const tutorialSteps = [
     {
-      title: t("tutorialWelcome"),
-      content: t("tutorialWelcomeDesc"),
+      title: isGuest ? "Welcome, Guest!" : t("tutorialWelcome"),
+      content: isGuest 
+        ? "You're exploring our financial app in guest mode. You can try most features, but consider signing up for full access to save your data!"
+        : t("tutorialWelcomeDesc"),
       icon: "👋"
     },
     {
       title: t("tutorialAssessment"),
-      content: t("tutorialAssessmentDesc"),
+      content: isGuest 
+        ? "Test our financial health assessment tool. Your results won't be saved in guest mode, but you can see how it works!"
+        : t("tutorialAssessmentDesc"),
       icon: "📊"
     },
     {
       title: t("tutorialBudget"),
-      content: t("tutorialBudgetDesc"),
+      content: isGuest
+        ? "Try our budgeting tools to see how they can help manage your finances. Sign up to save your budgets!"
+        : t("tutorialBudgetDesc"),
       icon: "💰"
     },
     {
       title: t("tutorialAI"),
-      content: t("tutorialAIDesc"),
+      content: isGuest
+        ? "Chat with our AI financial advisor for instant advice. All users get the same quality assistance!"
+        : t("tutorialAIDesc"),
       icon: "🤖"
     },
     {
@@ -42,8 +52,10 @@ const Tutorial = ({ onComplete, onStartAssessment }: TutorialProps) => {
       icon: "⚙️"
     },
     {
-      title: t("tutorialReady"),
-      content: t("tutorialReadyDesc"),
+      title: isGuest ? "Ready to Explore!" : t("tutorialReady"),
+      content: isGuest 
+        ? "You're all set to explore our financial tools! Remember, you can sign up anytime to save your progress and access additional features."
+        : t("tutorialReadyDesc"),
       icon: "🚀"
     }
   ];
@@ -72,7 +84,9 @@ const Tutorial = ({ onComplete, onStartAssessment }: TutorialProps) => {
       <Card className="w-full max-w-2xl">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-2xl">{t("appTutorial")}</CardTitle>
+            <CardTitle className="text-2xl">
+              {isGuest ? "Guest Tutorial" : t("appTutorial")}
+            </CardTitle>
             <Button variant="ghost" size="sm" onClick={onComplete}>
               {t("skipTutorial")}
             </Button>
@@ -109,7 +123,7 @@ const Tutorial = ({ onComplete, onStartAssessment }: TutorialProps) => {
             {currentStep === tutorialSteps.length - 1 ? (
               <div className="flex gap-2">
                 <Button variant="outline" onClick={onComplete}>
-                  {t("exploreMyOwn")}
+                  {isGuest ? "Start Exploring" : t("exploreMyOwn")}
                 </Button>
                 <Button onClick={handleStartAssessment} className="flex items-center gap-2">
                   <Activity className="h-4 w-4" />

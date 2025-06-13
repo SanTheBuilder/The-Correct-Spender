@@ -2,6 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Globe } from "lucide-react";
+import { useAuth } from "./AuthProvider";
 
 interface LanguageSelectorProps {
   onLanguageSelect: (language: string) => void;
@@ -9,6 +10,8 @@ interface LanguageSelectorProps {
 }
 
 const LanguageSelector = ({ onLanguageSelect, onContinue }: LanguageSelectorProps) => {
+  const { isGuest } = useAuth();
+  
   const languages = [
     { 
       code: "en", 
@@ -91,9 +94,17 @@ const LanguageSelector = ({ onLanguageSelect, onContinue }: LanguageSelectorProp
           <div className="flex items-center justify-center gap-3 mb-4">
             <Globe className="h-12 w-12 text-primary" aria-hidden="true" />
           </div>
-          <CardTitle className="text-3xl">Select Language / Seleccionar Idioma / Sélectionner la Langue</CardTitle>
+          <CardTitle className="text-3xl">
+            {isGuest 
+              ? "Select Language for Guest Mode / Seleccionar Idioma para Modo Invitado"
+              : "Select Language / Seleccionar Idioma / Sélectionner la Langue"
+            }
+          </CardTitle>
           <CardDescription className="text-lg">
-            Choose your preferred language to continue / Elige tu idioma preferido para continuar / Choisissez votre langue préférée pour continuer
+            {isGuest 
+              ? "Choose your preferred language to explore our app / Elige tu idioma preferido para explorar nuestra aplicación"
+              : "Choose your preferred language to continue / Elige tu idioma preferido para continuar / Choisissez votre langue préférée pour continuer"
+            }
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -118,7 +129,10 @@ const LanguageSelector = ({ onLanguageSelect, onContinue }: LanguageSelectorProp
           
           <div className="text-center pt-4">
             <Button onClick={onContinue} size="lg">
-              Continue / Continuar / Continuer
+              {isGuest 
+                ? "Continue as Guest / Continuar como Invitado"
+                : "Continue / Continuar / Continuer"
+              }
             </Button>
           </div>
         </CardContent>
