@@ -124,8 +124,8 @@ const Index = () => {
               {(user || isGuest) && (
                 <div className="text-sm text-muted-foreground">
                   {isGuest 
-                    ? (simpleMode ? "Guest Mode" : "Guest User") 
-                    : (simpleMode ? "Welcome" : "Welcome back"), {user?.email || "Guest"}
+                    ? `${simpleMode ? "Guest Mode" : "Guest User"}` 
+                    : `${simpleMode ? "Welcome" : "Welcome back"}, ${user?.email || "Guest"}`
                   }
                 </div>
               )}
