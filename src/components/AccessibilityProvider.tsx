@@ -1,13 +1,12 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface AccessibilityContextType {
-  fontSize: number;
-  setFontSize: (size: number) => void;
+  fontSize: string;
+  setFontSize: (size: string) => void;
   highContrast: boolean;
   setHighContrast: (enabled: boolean) => void;
-  screenReader: boolean;
-  setScreenReader: (enabled: boolean) => void;
+  screenReaderMode: boolean;
+  setScreenReaderMode: (enabled: boolean) => void;
   language: string;
   setLanguage: (lang: string) => void;
   simpleMode: boolean;
@@ -408,9 +407,9 @@ const translations = {
 };
 
 export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [fontSize, setFontSize] = useState(16);
+  const [fontSize, setFontSize] = useState('medium');
   const [highContrast, setHighContrast] = useState(false);
-  const [screenReader, setScreenReader] = useState(false);
+  const [screenReaderMode, setScreenReaderMode] = useState(false);
   const [language, setLanguage] = useState('en');
   const [simpleMode, setSimpleMode] = useState(false);
 
@@ -419,9 +418,9 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
     const savedPrefs = localStorage.getItem('accessibility-preferences');
     if (savedPrefs) {
       const prefs = JSON.parse(savedPrefs);
-      setFontSize(prefs.fontSize || 16);
+      setFontSize(prefs.fontSize || 'medium');
       setHighContrast(prefs.highContrast || false);
-      setScreenReader(prefs.screenReader || false);
+      setScreenReaderMode(prefs.screenReaderMode || false);
       setLanguage(prefs.language || 'en');
       setSimpleMode(prefs.simpleMode || false);
     }
@@ -432,16 +431,22 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
     const prefs = {
       fontSize,
       highContrast,
-      screenReader,
+      screenReaderMode,
       language,
       simpleMode
     };
     localStorage.setItem('accessibility-preferences', JSON.stringify(prefs));
 
     // Apply CSS variables
-    document.documentElement.style.setProperty('--font-size', `${fontSize}px`);
+    const fontSizeMap = {
+      'small': '14px',
+      'medium': '16px',
+      'large': '18px',
+      'extra-large': '20px'
+    };
+    document.documentElement.style.setProperty('--font-size', fontSizeMap[fontSize as keyof typeof fontSizeMap] || '16px');
     document.documentElement.classList.toggle('high-contrast', highContrast);
-  }, [fontSize, highContrast, screenReader, language, simpleMode]);
+  }, [fontSize, highContrast, screenReaderMode, language, simpleMode]);
 
   const t = (key: string): string => {
     const currentTranslations = translations[language as keyof typeof translations] || translations.en;
@@ -453,8 +458,8 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
     setFontSize,
     highContrast,
     setHighContrast,
-    screenReader,
-    setScreenReader,
+    screenReaderMode,
+    setScreenReaderMode,
     language,
     setLanguage,
     simpleMode,
