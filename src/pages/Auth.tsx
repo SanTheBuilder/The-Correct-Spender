@@ -1,11 +1,11 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { DollarSign, Mail, Lock, User, UserCheck } from "lucide-react";
+import { DollarSign, Mail, Lock, User, UserCheck, CheckCircle } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { useAccessibility } from "@/components/AccessibilityProvider";
@@ -18,58 +18,125 @@ const Auth = () => {
   const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
   const [guestLoading, setGuestLoading] = useState(false);
+  const [showVerificationMessage, setShowVerificationMessage] = useState(false);
   
   const { signIn, signUp, signInAsGuest } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t, simpleMode } = useAccessibility();
+
+  // Check for email confirmation on page load
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const error = urlParams.get('error');
+    const errorDescription = urlParams.get('error_description');
+    
+    if (error) {
+      console.error('Auth URL error:', error, errorDescription);
+      toast({
+        title: "Authentication Error",
+        description: errorDescription || "There was an error with email verification. Please try again.",
+        variant: "destructive",
+      });
+    }
+
+    // Check if we're coming back from email verification
+    const type = urlParams.get('type');
+    if (type === 'signup') {
+      toast({
+        title: "Email Verified!",
+        description: "Your email has been verified. You can now sign in.",
+        variant: "default",
+      });
+      setIsLogin(true);
+    }
+  }, [location, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email.trim() || !password.trim()) {
+      toast({
+        title: simpleMode ? "Fill all fields" : "Missing Information",
+        description: "Please enter both email and password.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
       let error;
       if (isLogin) {
+        console.log('Attempting login for:', email);
         ({ error } = await signIn(email, password));
       } else {
+        console.log('Attempting signup for:', email);
         ({ error } = await signUp(email, password, firstName, lastName));
       }
 
       if (error) {
+        console.error('Auth error:', error);
         let errorMessage = error.message;
         
         // Provide user-friendly error messages
-        if (error.message.includes('Invalid login credentials')) {
-          errorMessage = simpleMode ? "Wrong email or password" : "Invalid email or password. Please check your credentials.";
-        } else if (error.message.includes('User already registered')) {
+        if (error.message?.includes('Invalid login credentials') || 
+            error.message?.includes('invalid_credentials')) {
+          errorMessage = simpleMode ? "Wrong email or password" : "Invalid email or password. Please check your credentials and try again.";
+        } else if (error.message?.includes('User already registered')) {
           errorMessage = simpleMode ? "Email already used" : "An account with this email already exists. Please sign in instead.";
-        } else if (error.message.includes('Email not confirmed')) {
-          errorMessage = simpleMode ? "Check your email first" : "Please check your email and confirm your account before signing in.";
+          setIsLogin(true);
+        } else if (error.message?.includes('Email not confirmed')) {
+          errorMessage = simpleMode ? "Check your email first" : "Please check your email and click the verification link before signing in.";
+        } else if (error.message?.includes('check your email')) {
+          errorMessage = "Please check your email and click the verification link before signing in.";
+        } else if (error.message?.includes('signup_disabled')) {
+          errorMessage = "New signups are currently disabled. Please contact support.";
+        } else if (error.message?.includes('email_address_invalid')) {
+          errorMessage = "Please enter a valid email address.";
+        } else if (error.message?.includes('password')) {
+          errorMessage = "Password must be at least 6 characters long.";
         }
         
         toast({
-          title: simpleMode ? "Problem signing in" : "Authentication Error",
+          title: simpleMode ? "Problem" : "Authentication Error",
           description: errorMessage,
           variant: "destructive",
         });
       } else {
         if (isLogin) {
+          console.log('Login successful, navigating to home');
           navigate("/");
         } else {
+          console.log('Signup successful, showing verification message');
+          setShowVerificationMessage(true);
           toast({
             title: simpleMode ? "Account created!" : "Account created successfully",
             description: simpleMode 
-              ? "Check your email to verify your account before signing in" 
-              : "Please check your email to verify your account before signing in. The verification email may take a few minutes to arrive.",
+              ? "Check your email to verify your account" 
+              : "Please check your email and click the verification link to complete your registration.",
           });
-          setIsLogin(true);
+          
+          // Reset form
+          setEmail("");
+          setPassword("");
+          setFirstName("");
+          setLastName("");
+          
+          // Switch to login after 3 seconds
+          setTimeout(() => {
+            setIsLogin(true);
+            setShowVerificationMessage(false);
+          }, 3000);
         }
       }
     } catch (error) {
+      console.error('Unexpected auth error:', error);
       toast({
         title: t("error"),
-        description: "An unexpected error occurred. Please try again.",
+        description: "An unexpected error occurred. Please check your internet connection and try again.",
         variant: "destructive",
       });
     } finally {
@@ -80,17 +147,21 @@ const Auth = () => {
   const handleGuestSignIn = async () => {
     setGuestLoading(true);
     try {
+      console.log('Attempting guest sign in');
       const { error } = await signInAsGuest();
       if (error) {
+        console.error('Guest sign in error:', error);
         toast({
           title: "Guest Sign-in Error",
-          description: error.message,
+          description: error.message || "Failed to sign in as guest. Please try again.",
           variant: "destructive",
         });
       } else {
+        console.log('Guest sign in successful, navigating to home');
         navigate("/");
       }
     } catch (error) {
+      console.error('Guest sign in catch error:', error);
       toast({
         title: t("error"),
         description: "Failed to sign in as guest. Please try again.",
@@ -100,6 +171,40 @@ const Auth = () => {
       setGuestLoading(false);
     }
   };
+
+  if (showVerificationMessage) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+            <CardTitle className="text-2xl">Check Your Email</CardTitle>
+            <CardDescription>
+              We've sent a verification link to <strong>{email}</strong>. 
+              Click the link in the email to verify your account.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center space-y-4">
+              <p className="text-sm text-muted-foreground">
+                The email may take a few minutes to arrive. Check your spam folder if you don't see it.
+              </p>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowVerificationMessage(false);
+                  setIsLogin(true);
+                }}
+                className="w-full"
+              >
+                Back to Sign In
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -188,7 +293,13 @@ const Auth = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
+                  minLength={6}
                 />
+                {!isLogin && (
+                  <p className="text-xs text-muted-foreground">
+                    Password must be at least 6 characters long
+                  </p>
+                )}
               </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
@@ -226,7 +337,10 @@ const Auth = () => {
             <div className="mt-6 text-center">
               <Button
                 variant="link"
-                onClick={() => setIsLogin(!isLogin)}
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setShowVerificationMessage(false);
+                }}
                 className="text-sm"
               >
                 {isLogin 

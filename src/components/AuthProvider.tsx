@@ -31,7 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
-    // Check for guest mode
+    // Check for guest mode first
     const guestMode = localStorage.getItem('guest-mode');
     if (guestMode === 'true') {
       setIsGuest(true);
@@ -56,11 +56,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (event === 'TOKEN_REFRESHED') {
           console.log('Token refreshed successfully');
         }
+
+        if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
+          setUser(null);
+          setSession(null);
+        }
       }
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Error getting session:', error);
+      }
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -71,71 +80,115 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
+      setLoading(true);
+      console.log('Attempting to sign in with email:', email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
       
+      console.log('Sign in response:', { data, error });
+      
       if (error) {
+        console.error('Sign in error:', error);
         return { error };
+      }
+      
+      if (data.user && !data.user.email_confirmed_at) {
+        return { 
+          error: { 
+            message: 'Please check your email and click the verification link before signing in.' 
+          } 
+        };
       }
       
       return { error: null };
     } catch (error) {
+      console.error('Sign in catch error:', error);
       return { error };
+    } finally {
+      setLoading(false);
     }
   };
 
   const signUp = async (email: string, password: string, firstName?: string, lastName?: string) => {
     try {
-      // Get the current host for proper redirect
-      const redirectUrl = `${window.location.protocol}//${window.location.host}/`;
+      setLoading(true);
+      console.log('Attempting to sign up with email:', email);
+      
+      // Use the current application URL for redirect
+      const currentUrl = window.location.origin;
+      const redirectUrl = `${currentUrl}/auth`;
+      
+      console.log('Using redirect URL:', redirectUrl);
       
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: email.trim(),
         password,
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            first_name: firstName,
-            last_name: lastName,
+            first_name: firstName || '',
+            last_name: lastName || '',
           }
         }
       });
       
+      console.log('Sign up response:', { data, error });
+      
       if (error) {
+        console.error('Sign up error:', error);
         return { error };
+      }
+      
+      // Check if user needs email confirmation
+      if (data.user && !data.user.email_confirmed_at) {
+        console.log('Email confirmation required for user:', data.user.email);
       }
       
       return { error: null };
     } catch (error) {
+      console.error('Sign up catch error:', error);
       return { error };
+    } finally {
+      setLoading(false);
     }
   };
 
   const signInAsGuest = async () => {
     try {
+      setLoading(true);
+      console.log('Signing in as guest');
       localStorage.setItem('guest-mode', 'true');
       setIsGuest(true);
-      setLoading(false);
+      setUser(null);
+      setSession(null);
       return { error: null };
     } catch (error) {
+      console.error('Guest sign in error:', error);
       return { error };
+    } finally {
+      setLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
+      console.log('Signing out...');
       if (isGuest) {
         localStorage.removeItem('guest-mode');
         setIsGuest(false);
       } else {
-        await supabase.auth.signOut();
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          console.error('Sign out error:', error);
+        }
       }
       setUser(null);
       setSession(null);
     } catch (error) {
-      console.error('Sign out error:', error);
+      console.error('Sign out catch error:', error);
     }
   };
 
