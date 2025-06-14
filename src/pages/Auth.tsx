@@ -9,7 +9,7 @@ import { DollarSign, Mail, Lock, User, UserCheck, CheckCircle } from "lucide-rea
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { useAccessibility } from "@/components/AccessibilityProvider";
-import { supabase } from "@/integrations/supabase/client";
+import { handleEmailVerification, cleanUpVerificationUrl } from "@/utils/emailVerification";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -20,6 +20,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [guestLoading, setGuestLoading] = useState(false);
   const [showVerificationMessage, setShowVerificationMessage] = useState(false);
+  const [verificationProcessing, setVerificationProcessing] = useState(false);
   
   const { signIn, signUp, signInAsGuest } = useAuth();
   const { toast } = useToast();
@@ -27,98 +28,46 @@ const Auth = () => {
   const location = useLocation();
   const { t, simpleMode } = useAccessibility();
 
-  // Handle URL fragments and query parameters for email verification
+  // Handle email verification on page load
   useEffect(() => {
-    console.log('Auth: Checking URL for verification parameters');
+    console.log('Auth: Checking for email verification...');
     console.log('Auth: Current URL:', window.location.href);
-    console.log('Auth: Hash:', window.location.hash);
-    console.log('Auth: Search:', window.location.search);
     
-    const urlParams = new URLSearchParams(location.search);
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    
-    // Check for error in URL params
-    const error = urlParams.get('error') || hashParams.get('error');
-    const errorDescription = urlParams.get('error_description') || hashParams.get('error_description');
-    
-    if (error) {
-      console.error('Auth: URL error detected:', error, errorDescription);
-      toast({
-        title: "Authentication Error",
-        description: errorDescription || "There was an error with email verification. Please try again.",
-        variant: "destructive",
-      });
-      
-      // Clean up the URL
-      window.history.replaceState({}, document.title, '/auth');
-    }
-
-    // Check for successful verification
-    const type = hashParams.get('type');
-    const accessToken = hashParams.get('access_token');
-    const refreshToken = hashParams.get('refresh_token');
-    
-    console.log('Auth: Verification params:', { type, hasAccessToken: !!accessToken, hasRefreshToken: !!refreshToken });
-    
-    if (type === 'signup' && accessToken) {
-      console.log('Auth: Email verification detected, processing...');
-      
-      // Set the session manually to handle the verification
-      supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken || '',
-      }).then(({ data, error }) => {
-        if (error) {
-          console.error('Auth: Error setting session after verification:', error);
-          toast({
-            title: "Verification Error",
-            description: "There was an error completing your email verification. Please try signing in.",
-            variant: "destructive",
-          });
-        } else {
-          console.log('Auth: Email verification successful:', data.user?.email);
+    const processVerification = async () => {
+      if (window.location.hash.includes('access_token') || window.location.search.includes('access_token')) {
+        setVerificationProcessing(true);
+        
+        const result = await handleEmailVerification();
+        
+        if (result.success) {
           toast({
             title: "Email Verified!",
             description: "Your email has been verified successfully. Welcome!",
             variant: "default",
           });
           
-          // Redirect after successful verification
+          cleanUpVerificationUrl();
+          
+          // Redirect to main page after successful verification
           setTimeout(() => {
             window.location.href = '/';
           }, 2000);
+        } else if (result.error) {
+          toast({
+            title: "Verification Error",
+            description: result.error,
+            variant: "destructive",
+          });
+          
+          cleanUpVerificationUrl();
         }
-      });
-      
-      // Clean up the URL
-      window.history.replaceState({}, document.title, '/auth');
-    }
+        
+        setVerificationProcessing(false);
+      }
+    };
     
-    // Handle other verification types
-    if (type === 'recovery' && accessToken) {
-      console.log('Auth: Password recovery detected');
-      toast({
-        title: "Password Reset",
-        description: "You can now reset your password.",
-        variant: "default",
-      });
-    }
-    
-    // Check for verified query parameter (from our own redirect)
-    const verified = urlParams.get('verified');
-    if (verified === 'true') {
-      console.log('Auth: Custom verification parameter detected');
-      toast({
-        title: "Email Verified!",
-        description: "Your email has been verified. You can now sign in.",
-        variant: "default",
-      });
-      setIsLogin(true);
-      
-      // Clean up the URL
-      window.history.replaceState({}, document.title, '/auth');
-    }
-  }, [location, toast]);
+    processVerification();
+  }, [toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,23 +95,23 @@ const Auth = () => {
 
       if (error) {
         console.error('Auth: Authentication error:', error);
-        let errorMessage = error.message;
+        let errorMessage = error.message || 'An unexpected error occurred';
         
-        // Provide user-friendly error messages
-        if (error.message?.includes('Invalid login credentials') || 
-            error.message?.includes('invalid_credentials')) {
-          errorMessage = simpleMode ? "Wrong email or password" : "Invalid email or password. Please check your credentials and try again.";
-        } else if (error.message?.includes('User already registered')) {
+        // User-friendly error messages
+        if (errorMessage.includes('Invalid login credentials') || 
+            errorMessage.includes('invalid_credentials')) {
+          errorMessage = simpleMode ? "Wrong email or password" : "Invalid email or password. Please check your credentials.";
+        } else if (errorMessage.includes('User already registered')) {
           errorMessage = simpleMode ? "Email already used" : "An account with this email already exists. Please sign in instead.";
           setIsLogin(true);
-        } else if (error.message?.includes('Email not confirmed') || 
-                   error.message?.includes('check your email')) {
+        } else if (errorMessage.includes('Email not confirmed') || 
+                   errorMessage.includes('verify your email')) {
           errorMessage = simpleMode ? "Check your email first" : "Please check your email and click the verification link before signing in.";
-        } else if (error.message?.includes('signup_disabled')) {
+        } else if (errorMessage.includes('signup_disabled')) {
           errorMessage = "New signups are currently disabled. Please contact support.";
-        } else if (error.message?.includes('email_address_invalid')) {
+        } else if (errorMessage.includes('email_address_invalid')) {
           errorMessage = "Please enter a valid email address.";
-        } else if (error.message?.includes('password')) {
+        } else if (errorMessage.includes('password')) {
           errorMessage = "Password must be at least 6 characters long.";
         }
         
@@ -174,12 +123,11 @@ const Auth = () => {
       } else {
         if (isLogin) {
           console.log('Auth: Login successful');
-          // Navigation is handled by AuthProvider
         } else {
-          console.log('Auth: Signup successful, showing verification message');
+          console.log('Auth: Signup successful');
           setShowVerificationMessage(true);
           toast({
-            title: simpleMode ? "Account created!" : "Account created successfully",
+            title: simpleMode ? "Account created!" : "Account Created Successfully",
             description: simpleMode 
               ? "Check your email to verify your account" 
               : "Please check your email and click the verification link to complete your registration.",
@@ -191,7 +139,7 @@ const Auth = () => {
           setFirstName("");
           setLastName("");
           
-          // Switch to login after 5 seconds
+          // Switch to login after showing message
           setTimeout(() => {
             setIsLogin(true);
             setShowVerificationMessage(false);
@@ -202,7 +150,7 @@ const Auth = () => {
       console.error('Auth: Unexpected error:', error);
       toast({
         title: t("error"),
-        description: "An unexpected error occurred. Please check your internet connection and try again.",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -219,7 +167,7 @@ const Auth = () => {
         console.error('Auth: Guest sign in error:', error);
         toast({
           title: "Guest Sign-in Error",
-          description: error.message || "Failed to sign in as guest. Please try again.",
+          description: error.message || "Failed to sign in as guest.",
           variant: "destructive",
         });
       } else {
@@ -227,7 +175,7 @@ const Auth = () => {
         navigate("/");
       }
     } catch (error) {
-      console.error('Auth: Guest sign in catch error:', error);
+      console.error('Auth: Guest sign in error:', error);
       toast({
         title: t("error"),
         description: "Failed to sign in as guest. Please try again.",
@@ -238,6 +186,22 @@ const Auth = () => {
     }
   };
 
+  if (verificationProcessing) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+            <CardTitle className="text-2xl">Verifying Email</CardTitle>
+            <CardDescription>
+              Please wait while we verify your email address...
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
   if (showVerificationMessage) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -247,14 +211,13 @@ const Auth = () => {
             <CardTitle className="text-2xl">Check Your Email</CardTitle>
             <CardDescription>
               We've sent a verification link to <strong>{email}</strong>. 
-              Click the link in the email to verify your account and then return here to sign in.
+              Click the link in the email to verify your account.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-center space-y-4">
               <p className="text-sm text-muted-foreground">
                 The email may take a few minutes to arrive. Check your spam folder if you don't see it.
-                If you're still having trouble, try disabling "Confirm email" in your Supabase settings.
               </p>
               <Button 
                 variant="outline" 
