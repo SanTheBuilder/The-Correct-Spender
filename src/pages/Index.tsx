@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +12,7 @@ import UserMenu from "@/components/UserMenu";
 import { useAccessibility } from "@/components/AccessibilityProvider";
 import { useAuth } from "@/components/AuthProvider";
 import { getRandomFact } from "@/utils/financialData";
+import AppSettings from "@/components/AppSettings";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState<string>("overview");
@@ -159,7 +159,7 @@ const Index = () => {
                 </p>
               </section>
 
-              {/* Features Grid - All features available for both guest and registered users */}
+              {/* Features Grid - Updated to include app settings for authenticated users */}
               <section aria-labelledby="features-heading">
                 <h2 id="features-heading" className="sr-only">
                   {simpleMode ? 
@@ -171,7 +171,7 @@ const Index = () => {
                      "Available Features")
                   }
                 </h2>
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6" role="grid">
+                <div className={`grid ${user && !isGuest ? 'md:grid-cols-2 lg:grid-cols-5' : 'md:grid-cols-2 lg:grid-cols-4'} gap-6`} role="grid">
                   {[
                     {
                       id: "assessment",
@@ -216,7 +216,17 @@ const Index = () => {
                         : t("accessibilitySubtitle"),
                       icon: Settings,
                       color: "text-orange-600"
-                    }
+                    },
+                    // Add app settings only for authenticated users (not guests)
+                    ...(user && !isGuest ? [{
+                      id: "app-settings",
+                      title: simpleMode ? t("appSettings") || "App Settings" : t("appSettings") || "App Settings",
+                      description: simpleMode 
+                        ? t("manageYourAccount") || "Manage your account"
+                        : t("manageAppPreferences") || "Manage your account and app preferences",
+                      icon: Settings,
+                      color: "text-slate-600"
+                    }] : [])
                   ].map((feature) => (
                     <Card 
                       key={feature.id} 
@@ -336,6 +346,20 @@ const Index = () => {
                 ← {simpleMode ? t("back") : t("backToOverview")}
               </Button>
               <AccessibilitySettings />
+            </div>
+          )}
+
+          {activeSection === "app-settings" && user && !isGuest && (
+            <div>
+              <Button 
+                variant="outline" 
+                onClick={() => setActiveSection("overview")}
+                className="mb-6"
+                aria-label={simpleMode ? t("back") : t("backToOverview")}
+              >
+                ← {simpleMode ? t("back") : t("backToOverview")}
+              </Button>
+              <AppSettings />
             </div>
           )}
         </main>
