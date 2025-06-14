@@ -37,9 +37,20 @@ const Auth = () => {
       }
 
       if (error) {
+        let errorMessage = error.message;
+        
+        // Provide user-friendly error messages
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = simpleMode ? "Wrong email or password" : "Invalid email or password. Please check your credentials.";
+        } else if (error.message.includes('User already registered')) {
+          errorMessage = simpleMode ? "Email already used" : "An account with this email already exists. Please sign in instead.";
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = simpleMode ? "Check your email first" : "Please check your email and confirm your account before signing in.";
+        }
+        
         toast({
           title: simpleMode ? "Problem signing in" : "Authentication Error",
-          description: error.message,
+          description: errorMessage,
           variant: "destructive",
         });
       } else {
@@ -49,15 +60,15 @@ const Auth = () => {
           toast({
             title: simpleMode ? "Account created!" : "Account created successfully",
             description: simpleMode 
-              ? "Check your email to verify your account" 
-              : "Please check your email to verify your account before signing in.",
+              ? "Check your email to verify your account before signing in" 
+              : "Please check your email to verify your account before signing in. The verification email may take a few minutes to arrive.",
           });
           setIsLogin(true);
         }
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: t("error"),
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
@@ -81,7 +92,7 @@ const Auth = () => {
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: t("error"),
         description: "Failed to sign in as guest. Please try again.",
         variant: "destructive",
       });
@@ -106,14 +117,14 @@ const Auth = () => {
           <CardHeader>
             <CardTitle className="text-2xl text-center">
               {isLogin 
-                ? (simpleMode ? "Sign In" : "Welcome Back") 
-                : (simpleMode ? "Create Account" : "Create Your Account")
+                ? (simpleMode ? t("signIn") : t("welcomeBack")) 
+                : (simpleMode ? t("createAccount") : t("createAccount"))
               }
             </CardTitle>
             <CardDescription className="text-center">
               {isLogin 
-                ? (simpleMode ? "Enter your details to sign in" : "Enter your credentials to access your financial dashboard")
-                : (simpleMode ? "Fill in your details to get started" : "Join us to start your financial wellness journey")
+                ? (simpleMode ? t("enterDetails") : t("enterCredentials"))
+                : (simpleMode ? t("fillDetails") : t("joinFinancialJourney"))
               }
             </CardDescription>
           </CardHeader>
@@ -124,7 +135,7 @@ const Auth = () => {
                   <div className="space-y-2">
                     <Label htmlFor="firstName">
                       <User className="h-4 w-4 inline mr-2" aria-hidden="true" />
-                      {simpleMode ? "First Name" : "First Name"}
+                      {t("firstName")}
                     </Label>
                     <Input
                       id="firstName"
@@ -137,7 +148,7 @@ const Auth = () => {
                   <div className="space-y-2">
                     <Label htmlFor="lastName">
                       <User className="h-4 w-4 inline mr-2" aria-hidden="true" />
-                      {simpleMode ? "Last Name" : "Last Name"}
+                      {t("lastName")}
                     </Label>
                     <Input
                       id="lastName"
@@ -153,7 +164,7 @@ const Auth = () => {
               <div className="space-y-2">
                 <Label htmlFor="email">
                   <Mail className="h-4 w-4 inline mr-2" aria-hidden="true" />
-                  {simpleMode ? "Email" : "Email Address"}
+                  {t("email")}
                 </Label>
                 <Input
                   id="email"
@@ -168,7 +179,7 @@ const Auth = () => {
               <div className="space-y-2">
                 <Label htmlFor="password">
                   <Lock className="h-4 w-4 inline mr-2" aria-hidden="true" />
-                  {simpleMode ? "Password" : "Password"}
+                  {t("password")}
                 </Label>
                 <Input
                   id="password"
@@ -182,10 +193,8 @@ const Auth = () => {
 
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading 
-                  ? (simpleMode ? "Please wait..." : "Processing...") 
-                  : isLogin 
-                    ? (simpleMode ? "Sign In" : "Sign In") 
-                    : (simpleMode ? "Create Account" : "Create Account")
+                  ? (isLogin ? t("signingIn") : t("creatingAccount"))
+                  : (isLogin ? t("signIn") : t("createAccount"))
                 }
               </Button>
             </form>
@@ -210,7 +219,7 @@ const Auth = () => {
                 disabled={guestLoading}
               >
                 <UserCheck className="h-4 w-4 mr-2" />
-                {guestLoading ? "Signing in..." : "Continue as Guest"}
+                {guestLoading ? t("signingIn") : t("continueAsGuest")}
               </Button>
             </div>
 
@@ -221,8 +230,8 @@ const Auth = () => {
                 className="text-sm"
               >
                 {isLogin 
-                  ? (simpleMode ? "Need an account? Sign up" : "Don't have an account? Sign up") 
-                  : (simpleMode ? "Have an account? Sign in" : "Already have an account? Sign in")
+                  ? (simpleMode ? t("needAccount") : t("needAccount"))
+                  : (simpleMode ? t("haveAccount") : t("haveAccount"))
                 }
               </Button>
             </div>

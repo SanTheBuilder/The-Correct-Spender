@@ -41,12 +41,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         setIsGuest(false);
         setLoading(false);
+
+        // Handle email confirmation
+        if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
+          console.log('User email confirmed, redirecting to main app');
+        }
       }
     );
 
@@ -69,6 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string, firstName?: string, lastName?: string) => {
+    // Use the current origin for redirect URL to ensure it works in all environments
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({

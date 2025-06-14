@@ -135,9 +135,7 @@ const Index = () => {
                         (language === 'es' ? "Bienvenido" : 
                          language === 'fr' ? "Bienvenue" : 
                          "Welcome") : 
-                        (language === 'es' ? "Bienvenido de nuevo" : 
-                         language === 'fr' ? "Bon retour" : 
-                         "Welcome back")}, ${user?.email || "Guest"}`
+                        t("welcomeBack")}, ${user?.email || "Guest"}`
                   }
                 </div>
               )}
@@ -181,34 +179,32 @@ const Index = () => {
                       description: simpleMode 
                         ? t("checkMoneyHealthDesc") 
                         : (isGuest ? 
-                           (language === 'es' ? "Evalúa tu situación financiera actual (sin guardar resultados)" :
-                            language === 'fr' ? "Évaluez votre situation financière actuelle (sans sauvegarder les résultats)" :
-                            "Evaluate your current financial situation (results not saved)") :
+                           t("guestDataNotSaved") + " - " + (language === 'es' ? "Evalúa tu situación financiera actual" :
+                            language === 'fr' ? "Évaluez votre situation financière actuelle" :
+                            "Evaluate your current financial situation") :
                            "Evaluate your current financial situation and get personalized insights"),
                       icon: Activity,
                       color: "text-green-600"
                     },
                     {
                       id: "budgeting",
-                      title: simpleMode ? t("budgetHelper") : (language === 'es' ? "Herramientas de Presupuesto" : language === 'fr' ? "Outils de Budget" : "Budgeting Tools"),
+                      title: simpleMode ? t("budgetHelper") : t("budgetToolsTitle"),
                       description: simpleMode 
                         ? t("budgetHelperDesc") 
                         : (isGuest ?
-                           (language === 'es' ? "Crea y gestiona presupuestos (sin guardar)" :
-                            language === 'fr' ? "Créez et gérez des budgets (sans sauvegarder)" :
-                            "Create and manage budgets (not saved)") :
+                           t("guestDataNotSaved") + " - " + (language === 'es' ? "Crea y gestiona presupuestos" :
+                            language === 'fr' ? "Créez et gérez des budgets" :
+                            "Create and manage budgets") :
                            "Create and manage budgets that work for your lifestyle"),
                       icon: Calculator,
                       color: "text-blue-600"
                     },
                     {
                       id: "chat",
-                      title: simpleMode ? t("moneyHelperChat") : (language === 'es' ? "Asesor Financiero IA" : language === 'fr' ? "Conseiller Financier IA" : "AI Financial Advisor"),
+                      title: simpleMode ? t("moneyHelperChat") : t("aiChatTitle"),
                       description: simpleMode 
                         ? t("moneyHelperChatDesc") 
-                        : (language === 'es' ? "Obtén consejos instantáneos sobre tus decisiones financieras" :
-                           language === 'fr' ? "Obtenez des conseils instantanés sur vos décisions financières" :
-                           "Get instant advice and feedback on your financial decisions"),
+                        : t("aiChatSubtitle"),
                       icon: MessageCircle,
                       color: "text-purple-600"
                     },
@@ -217,9 +213,7 @@ const Index = () => {
                       title: simpleMode ? t("makeAppEasier") : t("accessibilitySettings"),
                       description: simpleMode 
                         ? t("makeAppEasierDesc") 
-                        : (language === 'es' ? "Personaliza la app para tus necesidades de accesibilidad" :
-                           language === 'fr' ? "Personnalisez l'app pour vos besoins d'accessibilité" :
-                           "Customize the app to meet your accessibility needs"),
+                        : t("accessibilitySubtitle"),
                       icon: Settings,
                       color: "text-orange-600"
                     }
@@ -241,7 +235,7 @@ const Index = () => {
                         <Button 
                           className="w-full" 
                           onClick={() => setActiveSection(feature.id)}
-                          aria-label={`${simpleMode ? "Go to" : "Go to"} ${feature.title}`}
+                          aria-label={`${t("start")} ${feature.title}`}
                         >
                           {simpleMode ? t("start") : t("getStarted")}
                         </Button>
@@ -256,14 +250,10 @@ const Index = () => {
                 <section className="bg-muted/50 border border-muted rounded-lg p-4">
                   <div className="text-center space-y-2">
                     <h3 className="text-lg font-semibold">
-                      {language === 'es' ? "💡 Modo Invitado Activo" :
-                       language === 'fr' ? "💡 Mode Invité Actif" :
-                       "💡 Guest Mode Active"}
+                      💡 {t("guestModeActive")}
                     </h3>
                     <p className="text-muted-foreground">
-                      {language === 'es' ? "Todas las funciones están disponibles para probar, pero tus datos no se guardarán. Regístrate para obtener acceso completo." :
-                       language === 'fr' ? "Toutes les fonctionnalités sont disponibles pour essayer, mais vos données ne seront pas sauvegardées. Inscrivez-vous pour un accès complet." :
-                       "All features are available to try, but your data won't be saved. Sign up for full access."}
+                      {t("guestModeDescription")}
                     </p>
                   </div>
                 </section>

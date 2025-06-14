@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,7 @@ const Tutorial = ({ onComplete, onStartAssessment }: TutorialProps) => {
       en: [
         {
           title: "Welcome, Guest!",
-          content: "You're exploring our financial app in guest mode. You can try most features, but consider signing up for full access to save your data!",
+          content: "You're exploring our financial app in guest mode. You can try all features, but your data won't be saved. Consider signing up for full access!",
           icon: "👋"
         },
         {
@@ -53,7 +54,7 @@ const Tutorial = ({ onComplete, onStartAssessment }: TutorialProps) => {
       es: [
         {
           title: "¡Bienvenido, Invitado!",
-          content: "Estás explorando nuestra app financiera en modo invitado. Puedes probar la mayoría de las funciones, ¡pero considera registrarte para acceso completo y guardar tus datos!",
+          content: "Estás explorando nuestra app financiera en modo invitado. Puedes probar todas las funciones, ¡pero tus datos no se guardarán. ¡Considera registrarte para acceso completo!",
           icon: "👋"
         },
         {
@@ -85,7 +86,7 @@ const Tutorial = ({ onComplete, onStartAssessment }: TutorialProps) => {
       fr: [
         {
           title: "Bienvenue, Invité!",
-          content: "Vous explorez notre app financière en mode invité. Vous pouvez essayer la plupart des fonctionnalités, mais considérez vous inscrire pour un accès complet et sauvegarder vos données!",
+          content: "Vous explorez notre app financière en mode invité. Vous pouvez essayer toutes les fonctionnalités, mais vos données ne seront pas sauvegardées. Considérez vous inscrire pour un accès complet!",
           icon: "👋"
         },
         {
@@ -116,46 +117,44 @@ const Tutorial = ({ onComplete, onStartAssessment }: TutorialProps) => {
       ]
     };
 
-    const registeredSteps = {
-      en: [
-        {
-          title: t("tutorialWelcome"),
-          content: t("tutorialWelcomeDesc"),
-          icon: "👋"
-        },
-        {
-          title: t("tutorialAssessment"),
-          content: t("tutorialAssessmentDesc"),
-          icon: "📊"
-        },
-        {
-          title: t("tutorialBudget"),
-          content: t("tutorialBudgetDesc"),
-          icon: "💰"
-        },
-        {
-          title: t("tutorialAI"),
-          content: t("tutorialAIDesc"),
-          icon: "🤖"
-        },
-        {
-          title: t("tutorialAccessibility"),
-          content: t("tutorialAccessibilityDesc"),
-          icon: "⚙️"
-        },
-        {
-          title: t("tutorialReady"),
-          content: t("tutorialReadyDesc"),
-          icon: "🚀"
-        }
-      ]
-    };
+    const registeredSteps = [
+      {
+        title: t("tutorialWelcome"),
+        content: t("tutorialWelcomeDesc"),
+        icon: "👋"
+      },
+      {
+        title: t("tutorialAssessment"),
+        content: t("tutorialAssessmentDesc"),
+        icon: "📊"
+      },
+      {
+        title: t("tutorialBudget"),
+        content: t("tutorialBudgetDesc"),
+        icon: "💰"
+      },
+      {
+        title: t("tutorialAI"),
+        content: t("tutorialAIDesc"),
+        icon: "🤖"
+      },
+      {
+        title: t("tutorialAccessibility"),
+        content: t("tutorialAccessibilityDesc"),
+        icon: "⚙️"
+      },
+      {
+        title: t("tutorialReady"),
+        content: t("tutorialReadyDesc"),
+        icon: "🚀"
+      }
+    ];
 
     if (isGuest) {
       return guestSteps[language as keyof typeof guestSteps] || guestSteps.en;
     }
     
-    return registeredSteps.en; // Use translated strings for registered users
+    return registeredSteps;
   };
 
   const tutorialSteps = getTutorialSteps();
