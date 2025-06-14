@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, User, Bot } from "lucide-react";
+import { generateEnhancedFinancialResponse } from "@/utils/aiFinancialResponses";
 
 interface Message {
   id: string;
@@ -16,7 +17,7 @@ const AIChat = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "Hello! I'm your personal financial advisor. I can help you with budgeting, saving strategies, debt management, and general financial advice. What would you like to know?",
+      content: generateEnhancedFinancialResponse("welcome", false, "en"),
       isUser: false,
       timestamp: new Date()
     }
@@ -35,43 +36,6 @@ const AIChat = () => {
     }
   }, [messages, isLoading]);
 
-  const generateAIResponse = (userMessage: string): string => {
-    const lowerMessage = userMessage.toLowerCase();
-    
-    // Budget-related responses
-    if (lowerMessage.includes('budget') || lowerMessage.includes('budgeting')) {
-      return "Great question about budgeting! Here are some key tips:\n\n1. Start with the 50-30-20 rule: 50% for needs, 30% for wants, 20% for savings\n2. Track all your expenses for at least a month\n3. Use the envelope method for discretionary spending\n4. Review and adjust your budget monthly\n\nWould you like me to help you create a specific budget category?";
-    }
-    
-    // Emergency fund responses
-    if (lowerMessage.includes('emergency') || lowerMessage.includes('fund')) {
-      return "Emergency funds are crucial for financial security! Here's what I recommend:\n\n• Start with $1,000 as your initial goal\n• Gradually build to 3-6 months of expenses\n• Keep it in a high-yield savings account\n• Only use for true emergencies (job loss, medical bills, major repairs)\n\nHow much do you currently have saved for emergencies?";
-    }
-    
-    // Debt-related responses
-    if (lowerMessage.includes('debt') || lowerMessage.includes('pay off')) {
-      return "Let's tackle your debt strategically! Here are two popular methods:\n\n**Debt Snowball:** Pay minimums on all debts, then put extra money toward the smallest debt first. Great for motivation!\n\n**Debt Avalanche:** Pay minimums on all debts, then put extra money toward the highest interest rate debt. Saves more money long-term.\n\nDo you have multiple debts you're working on?";
-    }
-    
-    // Saving responses
-    if (lowerMessage.includes('save') || lowerMessage.includes('saving')) {
-      return "Saving money is a fantastic habit! Here are some effective strategies:\n\n• Automate your savings - pay yourself first\n• Try the 52-week challenge (save $1 week 1, $2 week 2, etc.)\n• Use the 'round up' method - save your spare change\n• Cut one small expense and redirect that money to savings\n\nWhat's your current savings goal?";
-    }
-    
-    // Investment responses
-    if (lowerMessage.includes('invest') || lowerMessage.includes('investment')) {
-      return "Investing is key for long-term wealth building! As a beginner, consider:\n\n• Start with low-cost index funds\n• Take advantage of employer 401(k) matching\n• Consider a Roth IRA for tax-free growth\n• Don't try to time the market - be consistent\n• Only invest money you won't need for 5+ years\n\n⚠️ Remember: This is general information, not personalized advice. Consider consulting a financial advisor for your specific situation.";
-    }
-    
-    // Credit responses
-    if (lowerMessage.includes('credit') || lowerMessage.includes('score')) {
-      return "Building good credit is important for your financial future! Here's how:\n\n• Pay all bills on time (35% of your score)\n• Keep credit utilization below 30% (30% of your score)\n• Don't close old credit cards\n• Only apply for credit when necessary\n• Check your credit report annually for errors\n\nYour credit score affects loan rates, so it's worth maintaining!";
-    }
-    
-    // General helpful response
-    return "That's a great question! While I can provide general financial guidance, remember that everyone's situation is unique. Here are some general principles that help most people:\n\n• Live below your means\n• Build an emergency fund\n• Pay off high-interest debt\n• Start investing early\n• Educate yourself about money\n\nCould you be more specific about what aspect of finances you'd like help with? I can provide more targeted advice on budgeting, saving, debt, or investing.";
-  };
-
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
 
@@ -83,14 +47,15 @@ const AIChat = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = inputMessage;
     setInputMessage("");
     setIsLoading(true);
 
-    // Simulate AI thinking time
+    // Simulate AI thinking time with enhanced responses
     setTimeout(() => {
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
-        content: generateAIResponse(inputMessage),
+        content: generateEnhancedFinancialResponse(currentInput, false, "en"),
         isUser: false,
         timestamp: new Date()
       };
@@ -116,7 +81,7 @@ const AIChat = () => {
             AI Financial Advisor
           </CardTitle>
           <CardDescription>
-            Get personalized financial advice and answers to your money questions
+            Get comprehensive financial advice and detailed strategies for your money goals
           </CardDescription>
         </CardHeader>
         
@@ -174,7 +139,7 @@ const AIChat = () => {
           
           <div className="flex gap-2 mt-4 flex-shrink-0">
             <Input
-              placeholder="Ask me about budgeting, saving, debt, or any financial question..."
+              placeholder="Ask about budgeting, investing, debt payoff, credit building, or retirement planning..."
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
@@ -192,16 +157,17 @@ const AIChat = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Popular Questions</CardTitle>
+          <CardTitle>Expert Financial Topics</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-2">
             {[
-              "How do I create my first budget?",
-              "What's the best way to pay off debt?",
-              "How much should I save for emergencies?",
-              "When should I start investing?",
-              "How can I improve my credit score?"
+              "Create a complete budget using the 50/30/20 rule",
+              "Emergency fund strategy: How much and where to save",
+              "Debt payoff: Snowball vs Avalanche method comparison", 
+              "Investment basics: Index funds vs target-date funds",
+              "Credit score improvement: From 650 to 750+",
+              "Retirement planning: Calculate how much I need to save"
             ].map((question, index) => (
               <Button
                 key={index}
