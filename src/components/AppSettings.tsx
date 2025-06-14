@@ -129,7 +129,7 @@ const AppSettings = () => {
                     <Checkbox
                       id="email-notifications"
                       checked={emailNotifications}
-                      onCheckedChange={(checked) => setEmailNotifications(checked === true)}
+                      onCheckedChange={setEmailNotifications}
                     />
                     <Label htmlFor="email-notifications" className="cursor-pointer">
                       {t("emailNotifications") || "Email Notifications"}
@@ -143,7 +143,7 @@ const AppSettings = () => {
                     <Checkbox
                       id="push-notifications"
                       checked={pushNotifications}
-                      onCheckedChange={(checked) => setPushNotifications(checked === true)}
+                      onCheckedChange={setPushNotifications}
                     />
                     <Label htmlFor="push-notifications" className="cursor-pointer">
                       {t("pushNotifications") || "Push Notifications"}
@@ -174,7 +174,7 @@ const AppSettings = () => {
                     <Checkbox
                       id="data-sharing"
                       checked={dataSharing}
-                      onCheckedChange={(checked) => setDataSharing(checked === true)}
+                      onCheckedChange={setDataSharing}
                     />
                     <Label htmlFor="data-sharing" className="cursor-pointer">
                       {t("allowDataSharing") || "Allow Anonymous Data Sharing"}

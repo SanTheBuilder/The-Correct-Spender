@@ -1,24 +1,26 @@
-
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DollarSign, Calculator, MessageCircle, Activity, Settings } from "lucide-react";
+import FinancialHealthAssessment from "@/components/FinancialHealthAssessment";
+import BudgetingTools from "@/components/BudgetingTools";
+import EnhancedAIChat from "@/components/EnhancedAIChat";
+import AccessibilitySettings from "@/components/AccessibilitySettings";
 import LanguageSelector from "@/components/LanguageSelector";
 import Tutorial from "@/components/Tutorial";
+import UserMenu from "@/components/UserMenu";
 import { useAccessibility } from "@/components/AccessibilityProvider";
 import { useAuth } from "@/components/AuthProvider";
 import { getRandomFact } from "@/utils/financialData";
-import AppHeader from "@/components/layout/AppHeader";
-import WelcomeSection from "@/components/layout/WelcomeSection";
-import FeaturesGrid from "@/components/layout/FeaturesGrid";
-import GuestModeNotification from "@/components/layout/GuestModeNotification";
-import FinancialFactSection from "@/components/layout/FinancialFactSection";
-import SectionContent from "@/components/layout/SectionContent";
+import AppSettings from "@/components/AppSettings";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState<string>("overview");
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentFact, setCurrentFact] = useState<string>("");
-  const { setLanguage } = useAccessibility();
-  const { isGuest } = useAuth();
+  const { language, setLanguage, simpleMode, t } = useAccessibility();
+  const { user, isGuest } = useAuth();
 
   // Initialize random fact on mount and page refresh
   useEffect(() => {
@@ -77,10 +79,6 @@ const Index = () => {
     setActiveSection("assessment");
   };
 
-  const handleNewFact = () => {
-    setCurrentFact(getRandomFact());
-  };
-
   // Show language selector if needed
   if (showLanguageSelector) {
     return (
@@ -108,28 +106,261 @@ const Index = () => {
         href="#main-content" 
         className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-primary text-primary-foreground px-4 py-2 rounded z-50"
       >
-        Skip to main content
+        {t("skipToMain")}
       </a>
 
-      <AppHeader />
+      {/* Header */}
+      <header className="border-b" role="banner">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <DollarSign className="h-8 w-8 text-primary" aria-hidden="true" />
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">{t("appTitle")}</h1>
+                <p className="text-muted-foreground">{t("appSubtitle")}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              {(user || isGuest) && (
+                <div className="text-sm text-muted-foreground">
+                  {isGuest 
+                    ? `${simpleMode ? 
+                        (language === 'es' ? "Modo Invitado" : 
+                         language === 'fr' ? "Mode Invité" : 
+                         "Guest Mode") : 
+                        (language === 'es' ? "Usuario Invitado" : 
+                         language === 'fr' ? "Utilisateur Invité" : 
+                         "Guest User")}` 
+                    : `${simpleMode ? 
+                        (language === 'es' ? "Bienvenido" : 
+                         language === 'fr' ? "Bienvenue" : 
+                         "Welcome") : 
+                        t("welcomeBack")}, ${user?.email || "Guest"}`
+                  }
+                </div>
+              )}
+              <UserMenu />
+            </div>
+          </div>
+        </div>
+      </header>
 
       <div className="container mx-auto px-4 py-8">
         <main id="main-content" role="main">
-          {activeSection === "overview" ? (
+          {activeSection === "overview" && (
             <div className="space-y-8">
-              <WelcomeSection />
-              <FeaturesGrid onSectionChange={setActiveSection} />
-              {isGuest && <GuestModeNotification />}
-              <FinancialFactSection 
-                currentFact={currentFact}
-                onNewFact={handleNewFact}
-              />
+              {/* Welcome Section */}
+              <section className="text-center space-y-4" aria-labelledby="welcome-heading">
+                <h2 id="welcome-heading" className="text-3xl font-bold text-foreground">
+                  {isGuest ? t("welcomeGuestTitle") : t("welcomeTitle")}
+                </h2>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                  {isGuest ? t("welcomeGuestDescription") : t("welcomeDescription")}
+                </p>
+              </section>
+
+              {/* Features Grid - Updated to include app settings for authenticated users */}
+              <section aria-labelledby="features-heading">
+                <h2 id="features-heading" className="sr-only">
+                  {simpleMode ? 
+                    (language === 'es' ? "Cosas que puedes hacer" : 
+                     language === 'fr' ? "Choses que vous pouvez faire" : 
+                     "Things you can do") : 
+                    (language === 'es' ? "Funciones Disponibles" : 
+                     language === 'fr' ? "Fonctionnalités Disponibles" : 
+                     "Available Features")
+                  }
+                </h2>
+                <div className={`grid ${user && !isGuest ? 'md:grid-cols-2 lg:grid-cols-5' : 'md:grid-cols-2 lg:grid-cols-4'} gap-6`} role="grid">
+                  {[
+                    {
+                      id: "assessment",
+                      title: simpleMode ? t("checkMoneyHealth") : t("financialHealthAssessment"),
+                      description: simpleMode 
+                        ? t("checkMoneyHealthDesc") 
+                        : (isGuest ? 
+                           t("guestDataNotSaved") + " - " + (language === 'es' ? "Evalúa tu situación financiera actual" :
+                            language === 'fr' ? "Évaluez votre situation financière actuelle" :
+                            "Evaluate your current financial situation") :
+                           "Evaluate your current financial situation and get personalized insights"),
+                      icon: Activity,
+                      color: "text-green-600"
+                    },
+                    {
+                      id: "budgeting",
+                      title: simpleMode ? t("budgetHelper") : t("budgetToolsTitle"),
+                      description: simpleMode 
+                        ? t("budgetHelperDesc") 
+                        : (isGuest ?
+                           t("guestDataNotSaved") + " - " + (language === 'es' ? "Crea y gestiona presupuestos" :
+                            language === 'fr' ? "Créez et gérez des budgets" :
+                            "Create and manage budgets") :
+                           "Create and manage budgets that work for your lifestyle"),
+                      icon: Calculator,
+                      color: "text-blue-600"
+                    },
+                    {
+                      id: "chat",
+                      title: simpleMode ? t("moneyHelperChat") : t("aiChatTitle"),
+                      description: simpleMode 
+                        ? t("moneyHelperChatDesc") 
+                        : t("aiChatSubtitle"),
+                      icon: MessageCircle,
+                      color: "text-purple-600"
+                    },
+                    {
+                      id: "accessibility",
+                      title: simpleMode ? t("makeAppEasier") : t("accessibilitySettings"),
+                      description: simpleMode 
+                        ? t("makeAppEasierDesc") 
+                        : t("accessibilitySubtitle"),
+                      icon: Settings,
+                      color: "text-orange-600"
+                    },
+                    // Add app settings only for authenticated users (not guests)
+                    ...(user && !isGuest ? [{
+                      id: "app-settings",
+                      title: simpleMode ? t("appSettings") || "App Settings" : t("appSettings") || "App Settings",
+                      description: simpleMode 
+                        ? t("manageYourAccount") || "Manage your account"
+                        : t("manageAppPreferences") || "Manage your account and app preferences",
+                      icon: Settings,
+                      color: "text-slate-600"
+                    }] : [])
+                  ].map((feature) => (
+                    <Card 
+                      key={feature.id} 
+                      className="cursor-pointer hover:shadow-lg transition-shadow focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2"
+                      role="gridcell"
+                    >
+                      <CardHeader className="text-center">
+                        <feature.icon 
+                          className={`h-12 w-12 mx-auto ${feature.color}`} 
+                          aria-hidden="true"
+                        />
+                        <CardTitle className="text-xl">{feature.title}</CardTitle>
+                        <CardDescription>{feature.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Button 
+                          className="w-full" 
+                          onClick={() => setActiveSection(feature.id)}
+                          aria-label={`${t("start")} ${feature.title}`}
+                        >
+                          {simpleMode ? t("start") : t("getStarted")}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </section>
+
+              {/* Guest mode notification */}
+              {isGuest && (
+                <section className="bg-muted/50 border border-muted rounded-lg p-4">
+                  <div className="text-center space-y-2">
+                    <h3 className="text-lg font-semibold">
+                      💡 {t("guestModeActive")}
+                    </h3>
+                    <p className="text-muted-foreground">
+                      {t("guestModeDescription")}
+                    </p>
+                  </div>
+                </section>
+              )}
+
+              {/* Dynamic Financial Fact */}
+              <section aria-labelledby="facts-heading">
+                <Card className="bg-primary/5 border-primary/20">
+                  <CardHeader>
+                    <CardTitle id="facts-heading" className="text-center">
+                      {t("didYouKnow")}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-center space-y-2">
+                    <p className="text-lg font-medium text-foreground">{currentFact}</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setCurrentFact(getRandomFact())}
+                      className="mt-3"
+                    >
+                      {t("showAnotherFact")}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </section>
             </div>
-          ) : (
-            <SectionContent 
-              activeSection={activeSection}
-              onBack={() => setActiveSection("overview")}
-            />
+          )}
+
+          {activeSection === "assessment" && (
+            <div>
+              <Button 
+                variant="outline" 
+                onClick={() => setActiveSection("overview")}
+                className="mb-6"
+                aria-label={simpleMode ? t("back") : t("backToOverview")}
+              >
+                ← {simpleMode ? t("back") : t("backToOverview")}
+              </Button>
+              <FinancialHealthAssessment />
+            </div>
+          )}
+
+          {activeSection === "budgeting" && (
+            <div>
+              <Button 
+                variant="outline" 
+                onClick={() => setActiveSection("overview")}
+                className="mb-6"
+                aria-label={simpleMode ? t("back") : t("backToOverview")}
+              >
+                ← {simpleMode ? t("back") : t("backToOverview")}
+              </Button>
+              <BudgetingTools />
+            </div>
+          )}
+
+          {activeSection === "chat" && (
+            <div>
+              <Button 
+                variant="outline" 
+                onClick={() => setActiveSection("overview")}
+                className="mb-6"
+                aria-label={simpleMode ? t("back") : t("backToOverview")}
+              >
+                ← {simpleMode ? t("back") : t("backToOverview")}
+              </Button>
+              <EnhancedAIChat />
+            </div>
+          )}
+
+          {activeSection === "accessibility" && (
+            <div>
+              <Button 
+                variant="outline" 
+                onClick={() => setActiveSection("overview")}
+                className="mb-6"
+                aria-label={simpleMode ? t("back") : t("backToOverview")}
+              >
+                ← {simpleMode ? t("back") : t("backToOverview")}
+              </Button>
+              <AccessibilitySettings />
+            </div>
+          )}
+
+          {activeSection === "app-settings" && user && !isGuest && (
+            <div>
+              <Button 
+                variant="outline" 
+                onClick={() => setActiveSection("overview")}
+                className="mb-6"
+                aria-label={simpleMode ? t("back") : t("backToOverview")}
+              >
+                ← {simpleMode ? t("back") : t("backToOverview")}
+              </Button>
+              <AppSettings />
+            </div>
           )}
         </main>
       </div>
