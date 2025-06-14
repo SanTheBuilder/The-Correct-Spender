@@ -32,9 +32,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
+    console.log('AuthProvider: Setting up authentication...');
+    
     // Check for guest mode first
     const guestMode = localStorage.getItem('guest-mode');
     if (guestMode === 'true') {
+      console.log('AuthProvider: Guest mode detected');
       setIsGuest(true);
       setLoading(false);
       return;
@@ -43,7 +46,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
+        console.log('AuthProvider: Auth state changed:', event, session?.user?.email);
+        
         setSession(session);
         setUser(session?.user ?? null);
         setIsGuest(false);
@@ -51,17 +55,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Handle different auth events
         if (event === 'SIGNED_IN' && session?.user) {
-          console.log('User signed in successfully');
-          // Clear guest mode if user signs in
+          console.log('AuthProvider: User signed in successfully');
           localStorage.removeItem('guest-mode');
+          
+          // Only redirect if we're on the auth page
+          if (window.location.pathname === '/auth') {
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 100);
+          }
         }
         
         if (event === 'TOKEN_REFRESHED') {
-          console.log('Token refreshed successfully');
+          console.log('AuthProvider: Token refreshed successfully');
         }
 
         if (event === 'SIGNED_OUT') {
-          console.log('User signed out');
+          console.log('AuthProvider: User signed out');
           setUser(null);
           setSession(null);
         }
@@ -69,47 +79,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        console.error('Error getting session:', error);
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('AuthProvider: Error getting session:', error);
+        } else {
+          console.log('AuthProvider: Initial session check:', session?.user?.email || 'No session');
+          setSession(session);
+          setUser(session?.user ?? null);
+        }
+      } catch (error) {
+        console.error('AuthProvider: Error in initial auth check:', error);
+      } finally {
+        setLoading(false);
       }
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    };
 
-    return () => subscription.unsubscribe();
+    initializeAuth();
+
+    return () => {
+      console.log('AuthProvider: Cleaning up auth listener');
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
-      console.log('Attempting to sign in with email:', email);
+      console.log('AuthProvider: Starting sign in process for:', email);
       
       // Clean up any existing auth state first
       cleanupAuthState();
-      
-      // Attempt global sign out first
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-        console.log('Global sign out completed');
-      } catch (signOutError) {
-        console.log('Global sign out failed, continuing...', signOutError);
-      }
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
       
-      console.log('Sign in response:', { data, error });
+      console.log('AuthProvider: Sign in response:', { 
+        user: data.user?.email, 
+        error: error?.message 
+      });
       
       if (error) {
-        console.error('Sign in error:', error);
+        console.error('AuthProvider: Sign in error:', error);
         return { error };
       }
       
       if (data.user && !data.user.email_confirmed_at) {
+        console.log('AuthProvider: User email not confirmed');
         return { 
           error: { 
             message: 'Please check your email and click the verification link before signing in.' 
@@ -117,16 +136,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
       
-      // Force page reload on successful sign in
-      if (data.user && data.user.email_confirmed_at) {
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 100);
-      }
-      
       return { error: null };
     } catch (error) {
-      console.error('Sign in catch error:', error);
+      console.error('AuthProvider: Sign in catch error:', error);
       return { error };
     } finally {
       setLoading(false);
@@ -136,16 +148,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, firstName?: string, lastName?: string) => {
     try {
       setLoading(true);
-      console.log('Attempting to sign up with email:', email);
+      console.log('AuthProvider: Starting sign up process for:', email);
       
       // Clean up any existing auth state first
       cleanupAuthState();
       
-      // Use the current application URL for redirect - make sure it's the auth page
+      // Get the current URL and construct proper redirect
       const currentUrl = window.location.origin;
-      const redirectUrl = `${currentUrl}/auth?verified=true`;
+      const redirectUrl = `${currentUrl}/auth`;
       
-      console.log('Using redirect URL:', redirectUrl);
+      console.log('AuthProvider: Using redirect URL:', redirectUrl);
       
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
@@ -159,21 +171,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
       
-      console.log('Sign up response:', { data, error });
+      console.log('AuthProvider: Sign up response:', { 
+        user: data.user?.email, 
+        error: error?.message 
+      });
       
       if (error) {
-        console.error('Sign up error:', error);
+        console.error('AuthProvider: Sign up error:', error);
         return { error };
       }
       
-      // Check if user needs email confirmation
       if (data.user && !data.user.email_confirmed_at) {
-        console.log('Email confirmation required for user:', data.user.email);
+        console.log('AuthProvider: Email confirmation required for user:', data.user.email);
       }
       
       return { error: null };
     } catch (error) {
-      console.error('Sign up catch error:', error);
+      console.error('AuthProvider: Sign up catch error:', error);
       return { error };
     } finally {
       setLoading(false);
@@ -183,7 +197,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInAsGuest = async () => {
     try {
       setLoading(true);
-      console.log('Signing in as guest');
+      console.log('AuthProvider: Signing in as guest');
       
       // Clean up any existing auth state first
       cleanupAuthState();
@@ -194,7 +208,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(null);
       return { error: null };
     } catch (error) {
-      console.error('Guest sign in error:', error);
+      console.error('AuthProvider: Guest sign in error:', error);
       return { error };
     } finally {
       setLoading(false);
@@ -203,7 +217,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
-      console.log('Signing out...');
+      console.log('AuthProvider: Starting sign out process');
       
       // Clean up auth state first
       cleanupAuthState();
@@ -213,7 +227,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         const { error } = await supabase.auth.signOut({ scope: 'global' });
         if (error) {
-          console.error('Sign out error:', error);
+          console.error('AuthProvider: Sign out error:', error);
         }
       }
       
@@ -225,7 +239,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         window.location.href = '/auth';
       }, 100);
     } catch (error) {
-      console.error('Sign out catch error:', error);
+      console.error('AuthProvider: Sign out catch error:', error);
     }
   };
 

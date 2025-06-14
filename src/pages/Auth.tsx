@@ -9,7 +9,7 @@ import { DollarSign, Mail, Lock, User, UserCheck, CheckCircle } from "lucide-rea
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { useAccessibility } from "@/components/AccessibilityProvider";
-import { cleanupAuthState } from "@/utils/authCleanup";
+import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -27,15 +27,22 @@ const Auth = () => {
   const location = useLocation();
   const { t, simpleMode } = useAccessibility();
 
-  // Check for email confirmation on page load
+  // Handle URL fragments and query parameters for email verification
   useEffect(() => {
+    console.log('Auth: Checking URL for verification parameters');
+    console.log('Auth: Current URL:', window.location.href);
+    console.log('Auth: Hash:', window.location.hash);
+    console.log('Auth: Search:', window.location.search);
+    
     const urlParams = new URLSearchParams(location.search);
-    const error = urlParams.get('error');
-    const errorDescription = urlParams.get('error_description');
-    const verified = urlParams.get('verified');
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    
+    // Check for error in URL params
+    const error = urlParams.get('error') || hashParams.get('error');
+    const errorDescription = urlParams.get('error_description') || hashParams.get('error_description');
     
     if (error) {
-      console.error('Auth URL error:', error, errorDescription);
+      console.error('Auth: URL error detected:', error, errorDescription);
       toast({
         title: "Authentication Error",
         description: errorDescription || "There was an error with email verification. Please try again.",
@@ -46,8 +53,61 @@ const Auth = () => {
       window.history.replaceState({}, document.title, '/auth');
     }
 
-    // Check if we're coming back from email verification
+    // Check for successful verification
+    const type = hashParams.get('type');
+    const accessToken = hashParams.get('access_token');
+    const refreshToken = hashParams.get('refresh_token');
+    
+    console.log('Auth: Verification params:', { type, hasAccessToken: !!accessToken, hasRefreshToken: !!refreshToken });
+    
+    if (type === 'signup' && accessToken) {
+      console.log('Auth: Email verification detected, processing...');
+      
+      // Set the session manually to handle the verification
+      supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken || '',
+      }).then(({ data, error }) => {
+        if (error) {
+          console.error('Auth: Error setting session after verification:', error);
+          toast({
+            title: "Verification Error",
+            description: "There was an error completing your email verification. Please try signing in.",
+            variant: "destructive",
+          });
+        } else {
+          console.log('Auth: Email verification successful:', data.user?.email);
+          toast({
+            title: "Email Verified!",
+            description: "Your email has been verified successfully. Welcome!",
+            variant: "default",
+          });
+          
+          // Redirect after successful verification
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 2000);
+        }
+      });
+      
+      // Clean up the URL
+      window.history.replaceState({}, document.title, '/auth');
+    }
+    
+    // Handle other verification types
+    if (type === 'recovery' && accessToken) {
+      console.log('Auth: Password recovery detected');
+      toast({
+        title: "Password Reset",
+        description: "You can now reset your password.",
+        variant: "default",
+      });
+    }
+    
+    // Check for verified query parameter (from our own redirect)
+    const verified = urlParams.get('verified');
     if (verified === 'true') {
+      console.log('Auth: Custom verification parameter detected');
       toast({
         title: "Email Verified!",
         description: "Your email has been verified. You can now sign in.",
@@ -57,26 +117,6 @@ const Auth = () => {
       
       // Clean up the URL
       window.history.replaceState({}, document.title, '/auth');
-    }
-
-    // Check for hash fragments (Supabase sometimes uses these)
-    if (location.hash) {
-      const hashParams = new URLSearchParams(location.hash.substring(1));
-      const accessToken = hashParams.get('access_token');
-      const type = hashParams.get('type');
-      
-      if (accessToken && type === 'signup') {
-        toast({
-          title: "Email Verified!",
-          description: "Your email has been verified successfully. Redirecting...",
-          variant: "default",
-        });
-        
-        // Clean up and redirect
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 2000);
-      }
     }
   }, [location, toast]);
 
@@ -97,15 +137,15 @@ const Auth = () => {
     try {
       let error;
       if (isLogin) {
-        console.log('Attempting login for:', email);
+        console.log('Auth: Attempting login for:', email);
         ({ error } = await signIn(email, password));
       } else {
-        console.log('Attempting signup for:', email);
+        console.log('Auth: Attempting signup for:', email);
         ({ error } = await signUp(email, password, firstName, lastName));
       }
 
       if (error) {
-        console.error('Auth error:', error);
+        console.error('Auth: Authentication error:', error);
         let errorMessage = error.message;
         
         // Provide user-friendly error messages
@@ -115,10 +155,9 @@ const Auth = () => {
         } else if (error.message?.includes('User already registered')) {
           errorMessage = simpleMode ? "Email already used" : "An account with this email already exists. Please sign in instead.";
           setIsLogin(true);
-        } else if (error.message?.includes('Email not confirmed')) {
+        } else if (error.message?.includes('Email not confirmed') || 
+                   error.message?.includes('check your email')) {
           errorMessage = simpleMode ? "Check your email first" : "Please check your email and click the verification link before signing in.";
-        } else if (error.message?.includes('check your email')) {
-          errorMessage = "Please check your email and click the verification link before signing in.";
         } else if (error.message?.includes('signup_disabled')) {
           errorMessage = "New signups are currently disabled. Please contact support.";
         } else if (error.message?.includes('email_address_invalid')) {
@@ -134,10 +173,10 @@ const Auth = () => {
         });
       } else {
         if (isLogin) {
-          console.log('Login successful, navigating to home');
-          // Navigation handled in AuthProvider after successful login
+          console.log('Auth: Login successful');
+          // Navigation is handled by AuthProvider
         } else {
-          console.log('Signup successful, showing verification message');
+          console.log('Auth: Signup successful, showing verification message');
           setShowVerificationMessage(true);
           toast({
             title: simpleMode ? "Account created!" : "Account created successfully",
@@ -160,7 +199,7 @@ const Auth = () => {
         }
       }
     } catch (error) {
-      console.error('Unexpected auth error:', error);
+      console.error('Auth: Unexpected error:', error);
       toast({
         title: t("error"),
         description: "An unexpected error occurred. Please check your internet connection and try again.",
@@ -174,21 +213,21 @@ const Auth = () => {
   const handleGuestSignIn = async () => {
     setGuestLoading(true);
     try {
-      console.log('Attempting guest sign in');
+      console.log('Auth: Attempting guest sign in');
       const { error } = await signInAsGuest();
       if (error) {
-        console.error('Guest sign in error:', error);
+        console.error('Auth: Guest sign in error:', error);
         toast({
           title: "Guest Sign-in Error",
           description: error.message || "Failed to sign in as guest. Please try again.",
           variant: "destructive",
         });
       } else {
-        console.log('Guest sign in successful, navigating to home');
+        console.log('Auth: Guest sign in successful');
         navigate("/");
       }
     } catch (error) {
-      console.error('Guest sign in catch error:', error);
+      console.error('Auth: Guest sign in catch error:', error);
       toast({
         title: t("error"),
         description: "Failed to sign in as guest. Please try again.",
@@ -215,6 +254,7 @@ const Auth = () => {
             <div className="text-center space-y-4">
               <p className="text-sm text-muted-foreground">
                 The email may take a few minutes to arrive. Check your spam folder if you don't see it.
+                If you're still having trouble, try disabling "Confirm email" in your Supabase settings.
               </p>
               <Button 
                 variant="outline" 
