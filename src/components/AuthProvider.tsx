@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { cleanupAuthState } from '@/utils/authCleanup';
 
 interface AuthContextType {
   user: User | null;
@@ -51,6 +52,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Handle different auth events
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('User signed in successfully');
+          // Clear guest mode if user signs in
+          localStorage.removeItem('guest-mode');
         }
         
         if (event === 'TOKEN_REFRESHED') {
@@ -83,6 +86,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true);
       console.log('Attempting to sign in with email:', email);
       
+      // Clean up any existing auth state first
+      cleanupAuthState();
+      
+      // Attempt global sign out first
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+        console.log('Global sign out completed');
+      } catch (signOutError) {
+        console.log('Global sign out failed, continuing...', signOutError);
+      }
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
@@ -103,6 +117,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
       
+      // Force page reload on successful sign in
+      if (data.user && data.user.email_confirmed_at) {
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 100);
+      }
+      
       return { error: null };
     } catch (error) {
       console.error('Sign in catch error:', error);
@@ -117,9 +138,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true);
       console.log('Attempting to sign up with email:', email);
       
-      // Use the current application URL for redirect
+      // Clean up any existing auth state first
+      cleanupAuthState();
+      
+      // Use the current application URL for redirect - make sure it's the auth page
       const currentUrl = window.location.origin;
-      const redirectUrl = `${currentUrl}/auth`;
+      const redirectUrl = `${currentUrl}/auth?verified=true`;
       
       console.log('Using redirect URL:', redirectUrl);
       
@@ -160,6 +184,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       console.log('Signing in as guest');
+      
+      // Clean up any existing auth state first
+      cleanupAuthState();
+      
       localStorage.setItem('guest-mode', 'true');
       setIsGuest(true);
       setUser(null);
@@ -176,17 +204,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     try {
       console.log('Signing out...');
+      
+      // Clean up auth state first
+      cleanupAuthState();
+      
       if (isGuest) {
-        localStorage.removeItem('guest-mode');
         setIsGuest(false);
       } else {
-        const { error } = await supabase.auth.signOut();
+        const { error } = await supabase.auth.signOut({ scope: 'global' });
         if (error) {
           console.error('Sign out error:', error);
         }
       }
+      
       setUser(null);
       setSession(null);
+      
+      // Force page reload to ensure clean state
+      setTimeout(() => {
+        window.location.href = '/auth';
+      }, 100);
     } catch (error) {
       console.error('Sign out catch error:', error);
     }

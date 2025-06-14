@@ -9,6 +9,7 @@ import { DollarSign, Mail, Lock, User, UserCheck, CheckCircle } from "lucide-rea
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { useAccessibility } from "@/components/AccessibilityProvider";
+import { cleanupAuthState } from "@/utils/authCleanup";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -31,6 +32,7 @@ const Auth = () => {
     const urlParams = new URLSearchParams(location.search);
     const error = urlParams.get('error');
     const errorDescription = urlParams.get('error_description');
+    const verified = urlParams.get('verified');
     
     if (error) {
       console.error('Auth URL error:', error, errorDescription);
@@ -39,17 +41,42 @@ const Auth = () => {
         description: errorDescription || "There was an error with email verification. Please try again.",
         variant: "destructive",
       });
+      
+      // Clean up the URL
+      window.history.replaceState({}, document.title, '/auth');
     }
 
     // Check if we're coming back from email verification
-    const type = urlParams.get('type');
-    if (type === 'signup') {
+    if (verified === 'true') {
       toast({
         title: "Email Verified!",
         description: "Your email has been verified. You can now sign in.",
         variant: "default",
       });
       setIsLogin(true);
+      
+      // Clean up the URL
+      window.history.replaceState({}, document.title, '/auth');
+    }
+
+    // Check for hash fragments (Supabase sometimes uses these)
+    if (location.hash) {
+      const hashParams = new URLSearchParams(location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const type = hashParams.get('type');
+      
+      if (accessToken && type === 'signup') {
+        toast({
+          title: "Email Verified!",
+          description: "Your email has been verified successfully. Redirecting...",
+          variant: "default",
+        });
+        
+        // Clean up and redirect
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
+      }
     }
   }, [location, toast]);
 
@@ -108,7 +135,7 @@ const Auth = () => {
       } else {
         if (isLogin) {
           console.log('Login successful, navigating to home');
-          navigate("/");
+          // Navigation handled in AuthProvider after successful login
         } else {
           console.log('Signup successful, showing verification message');
           setShowVerificationMessage(true);
@@ -125,11 +152,11 @@ const Auth = () => {
           setFirstName("");
           setLastName("");
           
-          // Switch to login after 3 seconds
+          // Switch to login after 5 seconds
           setTimeout(() => {
             setIsLogin(true);
             setShowVerificationMessage(false);
-          }, 3000);
+          }, 5000);
         }
       }
     } catch (error) {
@@ -181,7 +208,7 @@ const Auth = () => {
             <CardTitle className="text-2xl">Check Your Email</CardTitle>
             <CardDescription>
               We've sent a verification link to <strong>{email}</strong>. 
-              Click the link in the email to verify your account.
+              Click the link in the email to verify your account and then return here to sign in.
             </CardDescription>
           </CardHeader>
           <CardContent>
