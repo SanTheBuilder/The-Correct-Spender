@@ -48,9 +48,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsGuest(false);
         setLoading(false);
 
-        // Handle email confirmation
-        if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
-          console.log('User email confirmed, redirecting to main app');
+        // Handle different auth events
+        if (event === 'SIGNED_IN' && session?.user) {
+          console.log('User signed in successfully');
+        }
+        
+        if (event === 'TOKEN_REFRESHED') {
+          console.log('Token refreshed successfully');
         }
       }
     );
@@ -66,29 +70,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        return { error };
+      }
+      
+      return { error: null };
+    } catch (error) {
+      return { error };
+    }
   };
 
   const signUp = async (email: string, password: string, firstName?: string, lastName?: string) => {
-    // Use the current origin for redirect URL to ensure it works in all environments
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          first_name: firstName,
-          last_name: lastName,
+    try {
+      // Get the current host for proper redirect
+      const redirectUrl = `${window.location.protocol}//${window.location.host}/`;
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+          }
         }
+      });
+      
+      if (error) {
+        return { error };
       }
-    });
-    return { error };
+      
+      return { error: null };
+    } catch (error) {
+      return { error };
+    }
   };
 
   const signInAsGuest = async () => {
@@ -103,11 +125,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    if (isGuest) {
-      localStorage.removeItem('guest-mode');
-      setIsGuest(false);
-    } else {
-      await supabase.auth.signOut();
+    try {
+      if (isGuest) {
+        localStorage.removeItem('guest-mode');
+        setIsGuest(false);
+      } else {
+        await supabase.auth.signOut();
+      }
+      setUser(null);
+      setSession(null);
+    } catch (error) {
+      console.error('Sign out error:', error);
     }
   };
 
