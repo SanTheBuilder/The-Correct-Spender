@@ -48,6 +48,22 @@ export const zh: Translation = {
   welcomeTitle: "欢迎来到您的财务之旅",
   welcomeDescription: "通过我们的综合工具和个性化指导控制您的财务。",
   
+  // Guest Tutorial - Adding missing translations
+  guestTutorial: "访客教程",
+  guestWelcome: "欢迎，访客！",
+  guestWelcomeDesc: "您正在访客模式下探索我们的财务应用。您可以尝试所有功能，但数据不会被保存。考虑注册以获得完整访问权限！",
+  testFinancialAssessment: "测试财务健康评估",
+  testFinancialAssessmentDesc: "尝试我们的财务健康评估工具。您的结果在访客模式下不会被保存，但您可以看到它是如何工作的！",
+  tryBudgetTools: "尝试预算工具",
+  tryBudgetToolsDesc: "探索我们的预算工具，看看它们如何帮助管理您的财务。注册以保存您的预算！",
+  chatWithAIAdvisor: "与AI顾问聊天",
+  chatWithAIAdvisorDesc: "与我们的AI财务顾问聊天以获得即时建议。所有用户都能获得相同质量的帮助！",
+  customizeExperience: "自定义您的体验",
+  customizeExperienceDesc: "调整无障碍设置，让应用更适合您使用。这些偏好设置会在本地保存。",
+  readyToExplore: "准备好探索！",
+  readyToExploreDesc: "您已经准备好探索我们的财务工具了！记住，您可以随时注册以保存进度并访问其他功能。",
+  startExploring: "开始探索",
+  
   // Features
   financialHealthAssessment: "财务健康评估",
   checkMoneyHealth: "检查资金健康",

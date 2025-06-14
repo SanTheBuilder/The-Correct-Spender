@@ -1,4 +1,3 @@
-
 import { Translation } from '@/types/accessibility';
 
 export const en: Translation = {
@@ -47,6 +46,24 @@ export const en: Translation = {
   welcomeGuestDescription: "You're trying our financial tools in guest mode. Feel free to explore everything - no email required!",
   welcomeTitle: "Welcome to Your Financial Journey",
   welcomeDescription: "Take control of your finances with our comprehensive tools and personalized guidance.",
+  
+  // Guest Tutorial
+  guestTutorial: "Guest Tutorial",
+  guestWelcome: "Welcome, Guest!",
+  guestWelcomeDesc: "You're exploring our financial app in guest mode. You can try all features, but your data won't be saved. Consider signing up for full access!",
+  testFinancialAssessment: "Test Financial Health Assessment",
+  testFinancialAssessmentDesc: "Try our financial health assessment tool. Your results won't be saved in guest mode, but you can see how it works!",
+  tryBudgetTools: "Try Budget Tools",
+  tryBudgetToolsDesc: "Explore our budgeting tools to see how they can help manage your finances. Sign up to save your budgets!",
+  chatWithAIAdvisor: "Chat with AI Advisor",
+  chatWithAIAdvisorDesc: "Chat with our AI financial advisor for instant advice. All users get the same quality assistance!",
+  customizeExperience: "Customize Your Experience",
+  customizeExperienceDesc: "Adjust accessibility settings to make the app work better for you. These preferences are saved locally.",
+  readyToExplore: "Ready to Explore!",
+  readyToExploreDesc: "You're all set to explore our financial tools! Remember, you can sign up anytime to save your progress and access additional features.",
+  startExploring: "Start Exploring",
+  step: "Step",
+  of: "of",
   
   // Features
   financialHealthAssessment: "Financial Health Assessment",

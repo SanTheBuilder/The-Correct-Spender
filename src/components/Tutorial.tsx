@@ -18,106 +18,42 @@ const Tutorial = ({ onComplete, onStartAssessment }: TutorialProps) => {
   const [currentStep, setCurrentStep] = useState(0);
 
   const getTutorialSteps = () => {
-    const guestSteps = {
-      en: [
+    if (isGuest) {
+      return [
         {
-          title: "Welcome, Guest!",
-          content: "You're exploring our financial app in guest mode. You can try all features, but your data won't be saved. Consider signing up for full access!",
+          title: t("guestWelcome") || "Welcome, Guest!",
+          content: t("guestWelcomeDesc") || "You're exploring our financial app in guest mode. You can try all features, but your data won't be saved. Consider signing up for full access!",
           icon: "👋"
         },
         {
-          title: "Test Financial Health Assessment",
-          content: "Try our financial health assessment tool. Your results won't be saved in guest mode, but you can see how it works!",
+          title: t("testFinancialAssessment") || "Test Financial Health Assessment",
+          content: t("testFinancialAssessmentDesc") || "Try our financial health assessment tool. Your results won't be saved in guest mode, but you can see how it works!",
           icon: "📊"
         },
         {
-          title: "Try Budget Tools",
-          content: "Explore our budgeting tools to see how they can help manage your finances. Sign up to save your budgets!",
+          title: t("tryBudgetTools") || "Try Budget Tools",
+          content: t("tryBudgetToolsDesc") || "Explore our budgeting tools to see how they can help manage your finances. Sign up to save your budgets!",
           icon: "💰"
         },
         {
-          title: "Chat with AI Advisor",
-          content: "Chat with our AI financial advisor for instant advice. All users get the same quality assistance!",
+          title: t("chatWithAIAdvisor") || "Chat with AI Advisor",
+          content: t("chatWithAIAdvisorDesc") || "Chat with our AI financial advisor for instant advice. All users get the same quality assistance!",
           icon: "🤖"
         },
         {
-          title: "Customize Your Experience",
-          content: "Adjust accessibility settings to make the app work better for you. These preferences are saved locally.",
+          title: t("customizeExperience") || "Customize Your Experience",
+          content: t("customizeExperienceDesc") || "Adjust accessibility settings to make the app work better for you. These preferences are saved locally.",
           icon: "⚙️"
         },
         {
-          title: "Ready to Explore!",
-          content: "You're all set to explore our financial tools! Remember, you can sign up anytime to save your progress and access additional features.",
+          title: t("readyToExplore") || "Ready to Explore!",
+          content: t("readyToExploreDesc") || "You're all set to explore our financial tools! Remember, you can sign up anytime to save your progress and access additional features.",
           icon: "🚀"
         }
-      ],
-      es: [
-        {
-          title: "¡Bienvenido, Invitado!",
-          content: "Estás explorando nuestra app financiera en modo invitado. Puedes probar todas las funciones, ¡pero tus datos no se guardarán. ¡Considera registrarte para acceso completo!",
-          icon: "👋"
-        },
-        {
-          title: "Prueba la Evaluación de Salud Financiera",
-          content: "Prueba nuestra herramienta de evaluación de salud financiera. Tus resultados no se guardarán en modo invitado, ¡pero puedes ver cómo funciona!",
-          icon: "📊"
-        },
-        {
-          title: "Prueba las Herramientas de Presupuesto",
-          content: "Explora nuestras herramientas de presupuesto para ver cómo pueden ayudar a gestionar tus finanzas. ¡Regístrate para guardar tus presupuestos!",
-          icon: "💰"
-        },
-        {
-          title: "Chatea con el Asesor IA",
-          content: "Chatea con nuestro asesor financiero IA para consejos instantáneos. ¡Todos los usuarios reciben la misma calidad de asistencia!",
-          icon: "🤖"
-        },
-        {
-          title: "Personaliza Tu Experiencia",
-          content: "Ajusta la configuración de accesibilidad para que la app funcione mejor para ti. Estas preferencias se guardan localmente.",
-          icon: "⚙️"
-        },
-        {
-          title: "¡Listo para Explorar!",
-          content: "¡Ya estás listo para explorar nuestras herramientas financieras! Recuerda, puedes registrarte en cualquier momento para guardar tu progreso y acceder a funciones adicionales.",
-          icon: "🚀"
-        }
-      ],
-      fr: [
-        {
-          title: "Bienvenue, Invité!",
-          content: "Vous explorez notre app financière en mode invité. Vous pouvez essayer toutes les fonctionnalités, mais vos données ne seront pas sauvegardées. Considérez vous inscrire pour un accès complet!",
-          icon: "👋"
-        },
-        {
-          title: "Testez l'Évaluation de Santé Financière",
-          content: "Essayez notre outil d'évaluation de santé financière. Vos résultats ne seront pas sauvegardés en mode invité, mais vous pouvez voir comment cela fonctionne!",
-          icon: "📊"
-        },
-        {
-          title: "Essayez les Outils de Budget",
-          content: "Explorez nos outils de budgétisation pour voir comment ils peuvent aider à gérer vos finances. Inscrivez-vous pour sauvegarder vos budgets!",
-          icon: "💰"
-        },
-        {
-          title: "Chattez avec le Conseiller IA",
-          content: "Chattez avec notre conseiller financier IA pour des conseils instantanés. Tous les utilisateurs reçoivent la même qualité d'assistance!",
-          icon: "🤖"
-        },
-        {
-          title: "Personnalisez Votre Expérience",
-          content: "Ajustez les paramètres d'accessibilité pour que l'app fonctionne mieux pour vous. Ces préférences sont sauvegardées localement.",
-          icon: "⚙️"
-        },
-        {
-          title: "Prêt à Explorer!",
-          content: "Vous êtes prêt à explorer nos outils financiers! Rappelez-vous, vous pouvez vous inscrire à tout moment pour sauvegarder votre progrès et accéder à des fonctionnalités supplémentaires.",
-          icon: "🚀"
-        }
-      ]
-    };
-
-    const registeredSteps = [
+      ];
+    }
+    
+    return [
       {
         title: t("tutorialWelcome"),
         content: t("tutorialWelcomeDesc"),
@@ -149,12 +85,6 @@ const Tutorial = ({ onComplete, onStartAssessment }: TutorialProps) => {
         icon: "🚀"
       }
     ];
-
-    if (isGuest) {
-      return guestSteps[language as keyof typeof guestSteps] || guestSteps.en;
-    }
-    
-    return registeredSteps;
   };
 
   const tutorialSteps = getTutorialSteps();
@@ -184,12 +114,7 @@ const Tutorial = ({ onComplete, onStartAssessment }: TutorialProps) => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-2xl">
-              {isGuest ? 
-                (language === 'es' ? "Tutorial de Invitado" : 
-                 language === 'fr' ? "Tutoriel d'Invité" : 
-                 "Guest Tutorial") : 
-                t("appTutorial")
-              }
+              {isGuest ? (t("guestTutorial") || "Guest Tutorial") : t("appTutorial")}
             </CardTitle>
             <Button variant="ghost" size="sm" onClick={onComplete}>
               {t("skipTutorial")}
@@ -197,9 +122,7 @@ const Tutorial = ({ onComplete, onStartAssessment }: TutorialProps) => {
           </div>
           <Progress value={progress} className="w-full" />
           <p className="text-sm text-muted-foreground">
-            {language === 'es' ? `Paso ${currentStep + 1} de ${tutorialSteps.length}` :
-             language === 'fr' ? `Étape ${currentStep + 1} de ${tutorialSteps.length}` :
-             `Step ${currentStep + 1} of ${tutorialSteps.length}`}
+            {`${t("step") || "Step"} ${currentStep + 1} ${t("of") || "of"} ${tutorialSteps.length}`}
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -229,12 +152,7 @@ const Tutorial = ({ onComplete, onStartAssessment }: TutorialProps) => {
             {currentStep === tutorialSteps.length - 1 ? (
               <div className="flex gap-2">
                 <Button variant="outline" onClick={onComplete}>
-                  {isGuest ? 
-                    (language === 'es' ? "Comenzar a Explorar" :
-                     language === 'fr' ? "Commencer à Explorer" :
-                     "Start Exploring") : 
-                    t("exploreMyOwn")
-                  }
+                  {isGuest ? (t("startExploring") || "Start Exploring") : t("exploreMyOwn")}
                 </Button>
                 <Button onClick={handleStartAssessment} className="flex items-center gap-2">
                   <Activity className="h-4 w-4" />
