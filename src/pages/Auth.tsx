@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { useAccessibility } from "@/components/AccessibilityProvider";
 import { handleEmailVerification, cleanUpVerificationUrl } from "@/utils/emailVerification";
+import { logger } from "@/utils/logger";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -30,8 +30,7 @@ const Auth = () => {
 
   // Handle email verification on page load
   useEffect(() => {
-    console.log('Auth: Checking for email verification...');
-    console.log('Auth: Current URL:', window.location.href);
+    logger.debug('Auth: Checking for email verification');
     
     const processVerification = async () => {
       if (window.location.hash.includes('access_token') || window.location.search.includes('access_token')) {
@@ -86,15 +85,15 @@ const Auth = () => {
     try {
       let error;
       if (isLogin) {
-        console.log('Auth: Attempting login for:', email);
+        logger.debug('Auth: Attempting login');
         ({ error } = await signIn(email, password));
       } else {
-        console.log('Auth: Attempting signup for:', email);
+        logger.debug('Auth: Attempting signup');
         ({ error } = await signUp(email, password, firstName, lastName));
       }
 
       if (error) {
-        console.error('Auth: Authentication error:', error);
+        logger.warn('Auth: Authentication error', { errorCode: error.code });
         let errorMessage = error.message || 'An unexpected error occurred';
         
         // User-friendly error messages
@@ -122,9 +121,9 @@ const Auth = () => {
         });
       } else {
         if (isLogin) {
-          console.log('Auth: Login successful');
+          logger.info('Auth: Login successful');
         } else {
-          console.log('Auth: Signup successful');
+          logger.info('Auth: Signup successful');
           setShowVerificationMessage(true);
           toast({
             title: simpleMode ? "Account created!" : "Account Created Successfully",
@@ -147,7 +146,7 @@ const Auth = () => {
         }
       }
     } catch (error) {
-      console.error('Auth: Unexpected error:', error);
+      logger.error('Auth: Unexpected error', error);
       toast({
         title: t("error"),
         description: "An unexpected error occurred. Please try again.",
@@ -161,21 +160,21 @@ const Auth = () => {
   const handleGuestSignIn = async () => {
     setGuestLoading(true);
     try {
-      console.log('Auth: Attempting guest sign in');
+      logger.debug('Auth: Attempting guest sign in');
       const { error } = await signInAsGuest();
       if (error) {
-        console.error('Auth: Guest sign in error:', error);
+        logger.warn('Auth: Guest sign in error', { errorCode: error.code });
         toast({
           title: "Guest Sign-in Error",
           description: error.message || "Failed to sign in as guest.",
           variant: "destructive",
         });
       } else {
-        console.log('Auth: Guest sign in successful');
+        logger.info('Auth: Guest sign in successful');
         navigate("/");
       }
     } catch (error) {
-      console.error('Auth: Guest sign in error:', error);
+      logger.error('Auth: Guest sign in error', error);
       toast({
         title: t("error"),
         description: "Failed to sign in as guest. Please try again.",

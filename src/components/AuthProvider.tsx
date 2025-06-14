@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,6 +14,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, firstName?: string, lastName?: string) => Promise<{ success: boolean; data?: any; error?: any }>;
   signOut: () => Promise<{ success: boolean; error?: any }>;
   continueAsGuest: () => void;
+  signInAsGuest: () => Promise<{ success: boolean; error?: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -192,6 +194,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
+  const signInAsGuest = async () => {
+    try {
+      setIsGuest(true);
+      logger.debug('User signed in as guest');
+      toast({
+        title: "Guest Mode",
+        description: "You're now using the app as a guest. Your data won't be saved.",
+      });
+      return { success: true };
+    } catch (error) {
+      const userError = errorHandler.handleError(error, 'guest sign in');
+      return { success: false, error: userError };
+    }
+  };
+
   const value: AuthContextType = {
     user,
     loading,
@@ -200,6 +217,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp,
     signOut,
     continueAsGuest,
+    signInAsGuest,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

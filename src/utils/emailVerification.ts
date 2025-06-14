@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from './logger';
 
 export const getRedirectUrl = () => {
   // Always use the current origin for redirects
@@ -8,7 +9,7 @@ export const getRedirectUrl = () => {
 };
 
 export const handleEmailVerification = async () => {
-  console.log('Starting email verification process...');
+  logger.debug('Starting email verification process');
   
   // Check for verification tokens in URL
   const urlParams = new URLSearchParams(window.location.search);
@@ -21,18 +22,16 @@ export const handleEmailVerification = async () => {
   const error = hashParams.get('error') || urlParams.get('error');
   const errorDescription = hashParams.get('error_description') || urlParams.get('error_description');
   
-  console.log('Verification params:', { 
+  logger.debug('Verification params', { 
     hasAccessToken: !!accessToken, 
     hasRefreshToken: !!refreshToken, 
     type, 
-    error,
-    fullHash: window.location.hash,
-    fullSearch: window.location.search
+    error
   });
   
   // Handle errors first
   if (error) {
-    console.error('Email verification error:', error, errorDescription);
+    logger.error('Email verification error', { error, errorDescription });
     return { 
       success: false, 
       error: errorDescription || 'Email verification failed' 
@@ -42,7 +41,7 @@ export const handleEmailVerification = async () => {
   // Handle successful verification
   if (type === 'signup' && accessToken && refreshToken) {
     try {
-      console.log('Setting session with verification tokens...');
+      logger.debug('Setting session with verification tokens');
       
       const { data, error } = await supabase.auth.setSession({
         access_token: accessToken,
@@ -50,20 +49,20 @@ export const handleEmailVerification = async () => {
       });
       
       if (error) {
-        console.error('Error setting session:', error);
+        logger.error('Error setting session', error);
         return { 
           success: false, 
           error: 'Failed to complete email verification' 
         };
       }
       
-      console.log('Email verification successful:', data.user?.email);
+      logger.info('Email verification successful', { email: data.user?.email });
       return { 
         success: true, 
         user: data.user 
       };
     } catch (error) {
-      console.error('Session setting error:', error);
+      logger.error('Session setting error', error);
       return { 
         success: false, 
         error: 'Verification process failed' 
